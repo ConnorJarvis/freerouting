@@ -208,26 +208,30 @@ public class PolylineTrace extends Trace implements Serializable {
       contacts.removeIf(ConductionArea.class::isInstance);
     }
     if (debugNet49) {
-      FRLogger.trace(
-          "compare_trace_combine_at_start_net49 thisId="
-              + this.getId()
-              + ", thisFixed="
-              + this.getFixedState()
-              + ", start="
-              + startCorner
-              + ", contacts="
-              + contacts.size());
-      for (Item c : contacts) {
+      if (FRLogger.isTraceEnabled()) {
         FRLogger.trace(
-            "  contact id="
-                + c.getId()
-                + ", type="
-                + c.getClass().getSimpleName()
-                + ", fixed="
-                + c.getFixedState()
-                + (c instanceof Trace t
-                    ? ", first=" + t.firstCorner() + ", last=" + t.lastCorner()
-                    : ""));
+            "compare_trace_combine_at_start_net49 thisId="
+                + this.getId()
+                + ", thisFixed="
+                + this.getFixedState()
+                + ", start="
+                + startCorner
+                + ", contacts="
+                + contacts.size());
+      }
+      for (Item c : contacts) {
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "  contact id="
+                  + c.getId()
+                  + ", type="
+                  + c.getClass().getSimpleName()
+                  + ", fixed="
+                  + c.getFixedState()
+                  + (c instanceof Trace t
+                      ? ", first=" + t.firstCorner() + ", last=" + t.lastCorner()
+                      : ""));
+        }
       }
     }
     if (contacts.size() != 1) {
@@ -254,21 +258,23 @@ public class PolylineTrace extends Trace implements Serializable {
             break;
           }
         } else if (debugNet49) {
-          FRLogger.trace(
-              "  combineAtStart REJECTED: layer="
-                  + otherTrace.getLayer()
-                  + "=="
-                  + getLayer()
-                  + ", nets="
-                  + otherTrace.netsEqual(this)
-                  + ", width="
-                  + otherTrace.getHalfWidth()
-                  + "=="
-                  + getHalfWidth()
-                  + ", fixed="
-                  + otherTrace.getFixedState()
-                  + "=="
-                  + this.getFixedState());
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "  combineAtStart REJECTED: layer="
+                    + otherTrace.getLayer()
+                    + "=="
+                    + getLayer()
+                    + ", nets="
+                    + otherTrace.netsEqual(this)
+                    + ", width="
+                    + otherTrace.getHalfWidth()
+                    + "=="
+                    + getHalfWidth()
+                    + ", fixed="
+                    + otherTrace.getFixedState()
+                    + "=="
+                    + this.getFixedState());
+          }
         }
       }
     }
@@ -348,26 +354,30 @@ public class PolylineTrace extends Trace implements Serializable {
       contacts.removeIf(ConductionArea.class::isInstance);
     }
     if (debugNet49) {
-      FRLogger.trace(
-          "compare_trace_combine_at_end_net49 thisId="
-              + this.getId()
-              + ", thisFixed="
-              + this.getFixedState()
-              + ", end="
-              + endCorner
-              + ", contacts="
-              + contacts.size());
-      for (Item c : contacts) {
+      if (FRLogger.isTraceEnabled()) {
         FRLogger.trace(
-            "  contact id="
-                + c.getId()
-                + ", type="
-                + c.getClass().getSimpleName()
-                + ", fixed="
-                + c.getFixedState()
-                + (c instanceof Trace t
-                    ? ", first=" + t.firstCorner() + ", last=" + t.lastCorner()
-                    : ""));
+            "compare_trace_combine_at_end_net49 thisId="
+                + this.getId()
+                + ", thisFixed="
+                + this.getFixedState()
+                + ", end="
+                + endCorner
+                + ", contacts="
+                + contacts.size());
+      }
+      for (Item c : contacts) {
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "  contact id="
+                  + c.getId()
+                  + ", type="
+                  + c.getClass().getSimpleName()
+                  + ", fixed="
+                  + c.getFixedState()
+                  + (c instanceof Trace t
+                      ? ", first=" + t.firstCorner() + ", last=" + t.lastCorner()
+                      : ""));
+        }
       }
     }
     if (contacts.size() != 1) {
@@ -522,25 +532,27 @@ public class PolylineTrace extends Trace implements Serializable {
           boolean debugNet49 =
               this.netNumbers != null && this.netNumbers.length > 0 && this.netNumbers[0] == 49;
           if (debugNet49 && intersectingLines.length > 0) {
-            FRLogger.trace(
-                "compare_trace_split_found_trace net=49, this_id="
-                    + this.getId()
-                    + ", this_seg="
-                    + i
-                    + ", this_first="
-                    + this.firstCorner()
-                    + ", this_last="
-                    + this.lastCorner()
-                    + ", found_id="
-                    + foundTrace.getId()
-                    + ", found_seg="
-                    + foundEntry.shapeIndexInObject
-                    + ", found_first="
-                    + foundTrace.firstCorner()
-                    + ", found_last="
-                    + foundTrace.lastCorner()
-                    + ", intersections="
-                    + intersectingLines.length);
+            if (FRLogger.isTraceEnabled()) {
+              FRLogger.trace(
+                  "compare_trace_split_found_trace net=49, this_id="
+                      + this.getId()
+                      + ", this_seg="
+                      + i
+                      + ", this_first="
+                      + this.firstCorner()
+                      + ", this_last="
+                      + this.lastCorner()
+                      + ", found_id="
+                      + foundTrace.getId()
+                      + ", found_seg="
+                      + foundEntry.shapeIndexInObject
+                      + ", found_first="
+                      + foundTrace.firstCorner()
+                      + ", found_last="
+                      + foundTrace.lastCorner()
+                      + ", intersections="
+                      + intersectingLines.length);
+            }
           }
 
           // try splitting the found trace first
@@ -557,25 +569,27 @@ public class PolylineTrace extends Trace implements Serializable {
                   if (currentSplitPieces[k] != null) {
                     foundTraceSplit = true;
                     if (this.netNumbers.length > 0 && this.netNumbers[0] == 94) {
-                      FRLogger.trace(
-                          "PolylineTrace.split",
-                          "compare_trace_found_trace_split",
-                          "foundTraceSplit=true at line index "
-                              + foundEntry.shapeIndexInObject
-                              + " with intersection "
-                              + intersectingLines[j],
-                          "Net #"
-                              + this.netNumbers[0]
-                              + ",Trace #"
-                              + foundTrace.getId()
-                              + ",Layer #"
-                              + foundTrace.getLayer(),
-                          new Point[] {
-                            foundTrace.firstCorner(),
-                            foundTrace.lastCorner(),
-                            lines.corner(i),
-                            lines.corner(i + 1)
-                          });
+                      if (FRLogger.isGranularTraceEnabled()) {
+                        FRLogger.trace(
+                            "PolylineTrace.split",
+                            "compare_trace_found_trace_split",
+                            "foundTraceSplit=true at line index "
+                                + foundEntry.shapeIndexInObject
+                                + " with intersection "
+                                + intersectingLines[j],
+                            "Net #"
+                                + this.netNumbers[0]
+                                + ",Trace #"
+                                + foundTrace.getId()
+                                + ",Layer #"
+                                + foundTrace.getLayer(),
+                            new Point[] {
+                              foundTrace.firstCorner(),
+                              foundTrace.lastCorner(),
+                              lines.corner(i),
+                              lines.corner(i + 1)
+                            });
+                      }
                     }
                     splitPieces.add(currentSplitPieces[k]);
                   }
@@ -629,17 +643,19 @@ public class PolylineTrace extends Trace implements Serializable {
                 int pieceId = currentPiece.getId();
                 boolean removedAsCycle = board.removeIfCycle(currentPiece);
                 if (debugThis && removedAsCycle) {
-                  FRLogger.trace(
-                      "compare_trace_split_cycle_removed net=49, pass="
-                          + j
-                          + ", piece_id="
-                          + pieceId
-                          + ", piece_first="
-                          + pieceFirst
-                          + ", piece_last="
-                          + pieceLast
-                          + ", this_id="
-                          + this.getId());
+                  if (FRLogger.isTraceEnabled()) {
+                    FRLogger.trace(
+                        "compare_trace_split_cycle_removed net=49, pass="
+                            + j
+                            + ", piece_id="
+                            + pieceId
+                            + ", piece_first="
+                            + pieceFirst
+                            + ", piece_last="
+                            + pieceLast
+                            + ", this_id="
+                            + this.getId());
+                  }
                 }
               }
 

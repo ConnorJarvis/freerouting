@@ -107,6 +107,44 @@ class Log4j2ConfigurationFactoryTest {
   }
 
   @Test
+  void rootLevelFollowsTheMostVerboseAppender() {
+    // Console at INFO, no file appender: TRACE must be disabled at the root so that hot trace call
+    // sites can skip building messages nobody consumes.
+    System.setProperty("freerouting.logging.console.enabled", "true");
+    System.setProperty("freerouting.logging.console.level", "INFO");
+    System.setProperty("freerouting.logging.file.enabled", "false");
+
+    Configuration config = factory.getConfiguration(null, "TestConfig", URI.create("test"));
+    assertEquals(Level.INFO, config.getRootLogger().getLevel());
+
+    // A TRACE file appender makes the root logger TRACE again.
+    String tempDir = System.getProperty("java.io.tmpdir");
+    String logFile = tempDir + "/freerouting_root_level_" + System.currentTimeMillis() + ".log";
+    try {
+      System.setProperty("freerouting.logging.file.enabled", "true");
+      System.setProperty("freerouting.logging.file.level", "TRACE");
+      System.setProperty("freerouting.logging.file.location", logFile);
+
+      config = factory.getConfiguration(null, "TestConfig", URI.create("test"));
+      assertEquals(Level.TRACE, config.getRootLogger().getLevel());
+    } finally {
+      try {
+        new java.io.File(logFile).delete();
+      } catch (Exception e) {
+        // ignore
+      }
+    }
+  }
+
+  @Test
+  void mostVerboseLevelPicksTheLessSpecificOne() {
+    assertEquals(Level.TRACE, Log4j2ConfigurationFactory.mostVerbose(Level.ERROR, Level.TRACE));
+    assertEquals(Level.DEBUG, Log4j2ConfigurationFactory.mostVerbose(Level.DEBUG, Level.WARN));
+    assertEquals(Level.INFO, Log4j2ConfigurationFactory.mostVerbose(Level.INFO, null));
+    assertEquals(Level.INFO, Log4j2ConfigurationFactory.mostVerbose(null, Level.INFO));
+  }
+
+  @Test
   void consoleOnlyConfiguration() {
     System.setProperty("freerouting.logging.console.enabled", "true");
     System.setProperty("freerouting.logging.console.level", "WARN");

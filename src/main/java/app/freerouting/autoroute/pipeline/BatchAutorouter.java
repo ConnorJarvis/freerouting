@@ -52,9 +52,6 @@ public final class BatchAutorouter extends NamedAlgorithm {
   static final int STAGNATION_PASS_LIMIT = 10;
   // Number of no-improvement passes before attempting a one-time fanout-tail cleanup.
   static final int FANOUT_RECOVERY_STAGNATION_PASSES = 3;
-  // Progress statistics are informational only; avoid rebuilding the expensive snapshot for
-  // every item while keeping the GUI reasonably current on large boards.
-  static final int PROGRESS_STATISTICS_ITEM_INTERVAL = 10;
   // Minimum score gain (on the 0–1000 normalized scale) that counts as a
   // meaningful improvement; gains smaller than this are treated as stagnation.
   static final float STAGNATION_SCORE_THRESHOLD = 0.5F;
@@ -93,7 +90,7 @@ public final class BatchAutorouter extends NamedAlgorithm {
   /** Time when the routing session started. */
   Instant sessionStartTime;
 
-  long lastBoardUpdateTimestamp;
+  final ProgressUpdateThrottle progressUpdateThrottle = new ProgressUpdateThrottle();
   boolean isOptimizerAutorouter;
   long profileItemSelectionNanos;
   long profileIntermediateStatisticsNanos;
@@ -106,7 +103,6 @@ public final class BatchAutorouter extends NamedAlgorithm {
   int profileRouteItemCount;
   int profilePlaneItemCount;
   BoardStatistics progressStatistics;
-  int progressItemsSinceStatistics;
 
   /** Creates a BatchAutorouter for the given routing job. */
   public BatchAutorouter(RoutingJob job) {
@@ -335,13 +331,7 @@ public final class BatchAutorouter extends NamedAlgorithm {
   }
 
   boolean shouldFireBoardUpdate() {
-    long currentTime = System.currentTimeMillis();
-    if (currentTime - lastBoardUpdateTimestamp
-        > 250) { // Limit updates to 4 times per second (250ms)
-      lastBoardUpdateTimestamp = currentTime;
-      return true;
-    }
-    return false;
+    return progressUpdateThrottle.shouldUpdate();
   }
 
   List<Item> getAutorouteItems(RoutingBoard board) {

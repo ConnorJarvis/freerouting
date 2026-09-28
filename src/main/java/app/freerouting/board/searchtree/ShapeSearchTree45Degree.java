@@ -583,52 +583,56 @@ public class ShapeSearchTree45Degree extends ShapeSearchTree {
       boolean sameLayer,
       boolean ignoredObject,
       SearchTreeObject object) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_FILTER"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", shapeIndex="
-            + shapeIndex
-            + ", object_layer="
-            + objectLayer
-            + ", is_trace_obstacle="
-            + isObstacle
-            + ", same_layer="
-            + sameLayer
-            + ", ignored_object="
-            + ignoredObject
-            + ", accepted="
-            + (isObstacle && sameLayer && !ignoredObject)
-            + ", obstacle_id="
-            + obstacleId(object)
-            + ", obstacle_nets="
-            + obstacleNets(object)
-            + ", obstacle="
-            + object);
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_FILTER"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", shapeIndex="
+              + shapeIndex
+              + ", object_layer="
+              + objectLayer
+              + ", is_trace_obstacle="
+              + isObstacle
+              + ", same_layer="
+              + sameLayer
+              + ", ignored_object="
+              + ignoredObject
+              + ", accepted="
+              + (isObstacle && sameLayer && !ignoredObject)
+              + ", obstacle_id="
+              + obstacleId(object)
+              + ", obstacle_nets="
+              + obstacleNets(object)
+              + ", obstacle="
+              + object);
+    }
   }
 
   private static void traceCompleteShapeCandidate(
       int step, int netNumber, int roomLayer, SearchTreeObject object, IntOctagon obstacleShape) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_OBS candidate"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", obstacle="
-            + object
-            + ", obstacle_id="
-            + obstacleId(object)
-            + ", obstacle_nets="
-            + obstacleNets(object)
-            + ", obstacle_bounds="
-            + describeBounds(obstacleShape.boundingBox()));
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_OBS candidate"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", obstacle="
+              + object
+              + ", obstacle_id="
+              + obstacleId(object)
+              + ", obstacle_nets="
+              + obstacleNets(object)
+              + ", obstacle_bounds="
+              + describeBounds(obstacleShape.boundingBox()));
+    }
   }
 
   private static void traceCompleteShapeDecision(
@@ -639,22 +643,24 @@ public class ShapeSearchTree45Degree extends ShapeSearchTree {
       boolean overlap,
       IntOctagon roomShape,
       IntOctagon obstacleShape) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_DECISION"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", action="
-            + action
-            + ", overlap="
-            + overlap
-            + ", room_bounds="
-            + describeBounds(roomShape.boundingBox())
-            + ", obstacle_bounds="
-            + describeBounds(obstacleShape.boundingBox()));
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_DECISION"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", action="
+              + action
+              + ", overlap="
+              + overlap
+              + ", room_bounds="
+              + describeBounds(roomShape.boundingBox())
+              + ", obstacle_bounds="
+              + describeBounds(obstacleShape.boundingBox()));
+    }
   }
 
   private static int obstacleId(SearchTreeObject object) {

@@ -12,9 +12,9 @@ import app.freerouting.geometry.planar.IntBox;
 import app.freerouting.geometry.planar.IntPoint;
 import app.freerouting.geometry.planar.Point;
 import app.freerouting.logger.FRLogger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Owns the item-list access and search-tree/observer bookkeeping for a {@link BasicBoard}.
@@ -58,9 +58,14 @@ public final class BoardItemRepository {
     }
   }
 
-  /** Returns a snapshot collection of all items currently in the item list. */
+  /**
+   * Returns a snapshot collection of all items currently in the item list.
+   *
+   * <p>The snapshot is an {@link ArrayList}: callers iterate it far more often than they mutate it,
+   * and a linked list costs one node allocation per board item on every call.
+   */
   Collection<Item> getItems() {
-    Collection<Item> result = new LinkedList<>();
+    Collection<Item> result = new ArrayList<>();
     Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
     for (; ; ) {
       Item currentItem = (Item) board.itemList.readObject(iterator);
@@ -72,63 +77,102 @@ public final class BoardItemRepository {
   }
 
   Collection<ConductionArea> getConductionAreas() {
-    Collection<ConductionArea> result = new LinkedList<>();
-    for (Item currentItem : getItems()) {
+    Collection<ConductionArea> result = new ArrayList<>();
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof ConductionArea area) {
         result.add(area);
       }
     }
-    return result;
   }
 
   Collection<Pin> getPins() {
-    Collection<Pin> result = new LinkedList<>();
-    for (Item currentItem : getItems()) {
+    Collection<Pin> result = new ArrayList<>();
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof Pin pin) {
         result.add(pin);
       }
     }
-    return result;
+  }
+
+  /** Counts the pins in the item list without materialising a collection. */
+  int countPins() {
+    int result = 0;
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
+      if (currentItem instanceof Pin) {
+        ++result;
+      }
+    }
   }
 
   Collection<Pin> getSmdPins() {
-    Collection<Pin> result = new LinkedList<>();
-    for (Item currentItem : getItems()) {
+    Collection<Pin> result = new ArrayList<>();
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof Pin pin && pin.firstLayer() == pin.lastLayer()) {
         result.add(pin);
       }
     }
-    return result;
   }
 
   Collection<Via> getVias() {
-    Collection<Via> result = new LinkedList<>();
-    for (Item currentItem : getItems()) {
+    Collection<Via> result = new ArrayList<>();
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof Via via) {
         result.add(via);
       }
     }
-    return result;
   }
 
   Collection<Trace> getTraces() {
-    Collection<Trace> result = new LinkedList<>();
-    for (Item currentItem : getItems()) {
+    Collection<Trace> result = new ArrayList<>();
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof Trace trace) {
         result.add(trace);
       }
     }
-    return result;
   }
 
   double cumulativeTraceLength() {
     double result = 0;
-    for (Item currentItem : getItems()) {
+    Iterator<UndoableObjects.UndoableObjectNode> iterator = board.itemList.startReadObject();
+    for (; ; ) {
+      UndoableObjects.Storable currentItem = board.itemList.readObject(iterator);
+      if (currentItem == null) {
+        return result;
+      }
       if (currentItem instanceof Trace trace) {
         result += trace.getLength();
       }
     }
-    return result;
   }
 
   /** Inserts an item and performs the existing tree, observer, and revision updates. */
@@ -136,7 +180,7 @@ public final class BoardItemRepository {
     if (item == null) {
       return;
     }
-    if (isItemActivityDebugCandidate(item)) {
+    if (FRLogger.isTraceEnabled() && isItemActivityDebugCandidate(item)) {
       FRLogger.trace(
           "ITEM_ACTIVITY action=INSERT"
               + ", id="
@@ -171,7 +215,7 @@ public final class BoardItemRepository {
     if (item == null) {
       return;
     }
-    if (isItemActivityDebugCandidate(item)) {
+    if (FRLogger.isTraceEnabled() && isItemActivityDebugCandidate(item)) {
       FRLogger.trace(
           "ITEM_ACTIVITY action=REMOVE"
               + ", id="
@@ -247,22 +291,11 @@ public final class BoardItemRepository {
         && polylineTrace.cornerCount() == 2
         && trace.firstCorner().equals(new IntPoint(1885928, -1097274))
         && trace.lastCorner().equals(new IntPoint(1885928, -1098024))) {
-      FRLogger.trace(
-          "BasicBoard.remove_item",
-          "compare_trace_remove_item",
-          "REMOVE_ITEM called on trace [7,8]",
-          "Net #"
-              + trace.netNumbers[0]
-              + ",Trace #"
-              + trace.getId()
-              + ",Layer #"
-              + trace.getLayer(),
-          new Point[] {trace.firstCorner(), trace.lastCorner()});
-      for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+      if (FRLogger.isGranularTraceEnabled()) {
         FRLogger.trace(
             "BasicBoard.remove_item",
-            "compare_trace_remove_item_stack",
-            stackTraceElement.toString(),
+            "compare_trace_remove_item",
+            "REMOVE_ITEM called on trace [7,8]",
             "Net #"
                 + trace.netNumbers[0]
                 + ",Trace #"
@@ -271,18 +304,35 @@ public final class BoardItemRepository {
                 + trace.getLayer(),
             new Point[] {trace.firstCorner(), trace.lastCorner()});
       }
+      for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+        if (FRLogger.isGranularTraceEnabled()) {
+          FRLogger.trace(
+              "BasicBoard.remove_item",
+              "compare_trace_remove_item_stack",
+              stackTraceElement.toString(),
+              "Net #"
+                  + trace.netNumbers[0]
+                  + ",Trace #"
+                  + trace.getId()
+                  + ",Layer #"
+                  + trace.getLayer(),
+              new Point[] {trace.firstCorner(), trace.lastCorner()});
+        }
+      }
     } else {
-      FRLogger.trace(
-          "BasicBoard.remove_item",
-          "compare_trace_remove_item",
-          "REMOVE_ITEM called by " + Thread.currentThread().getStackTrace()[3],
-          "Net #"
-              + trace.netNumbers[0]
-              + ",Trace #"
-              + trace.getId()
-              + ",Layer #"
-              + trace.getLayer(),
-          new Point[] {trace.firstCorner(), trace.lastCorner()});
+      if (FRLogger.isGranularTraceEnabled()) {
+        FRLogger.trace(
+            "BasicBoard.remove_item",
+            "compare_trace_remove_item",
+            "REMOVE_ITEM called by " + Thread.currentThread().getStackTrace()[3],
+            "Net #"
+                + trace.netNumbers[0]
+                + ",Trace #"
+                + trace.getId()
+                + ",Layer #"
+                + trace.getLayer(),
+            new Point[] {trace.firstCorner(), trace.lastCorner()});
+      }
     }
   }
 }

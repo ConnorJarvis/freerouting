@@ -827,7 +827,9 @@ public class ShapeSearchTree extends MinAreaTree {
     }
     TileShape roomShape = incompleteRoom.getShape();
     if (shapeToBeContained == null || shapeToBeContained.isEmpty()) {
-      FRLogger.trace("ShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace("ShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      }
       return result;
     }
     int layer = incompleteRoom.getLayer();

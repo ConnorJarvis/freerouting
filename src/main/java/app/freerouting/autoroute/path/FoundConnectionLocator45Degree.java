@@ -106,20 +106,22 @@ public class FoundConnectionLocator45Degree extends FoundConnectionLocator {
 
     if (this.currentToDoorIndex > this.currentTargetDoorIndex) {
       if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-        FRLogger.trace(
-            "compare_trace_next_corners_raw net="
-                + this.ctrl.netNumber
-                + ", mode=45, branch=NO_MORE_DOORS"
-                + ", layer="
-                + this.currentTraceLayer
-                + ", from_door="
-                + this.currentFromDoorIndex
-                + ", to_door="
-                + this.currentToDoorIndex
-                + ", target_door="
-                + this.currentTargetDoorIndex
-                + ", result_size="
-                + result.size());
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_next_corners_raw net="
+                  + this.ctrl.netNumber
+                  + ", mode=45, branch=NO_MORE_DOORS"
+                  + ", layer="
+                  + this.currentTraceLayer
+                  + ", from_door="
+                  + this.currentFromDoorIndex
+                  + ", to_door="
+                  + this.currentToDoorIndex
+                  + ", target_door="
+                  + this.currentTargetDoorIndex
+                  + ", result_size="
+                  + result.size());
+        }
       }
       return result;
     }
@@ -149,28 +151,30 @@ public class FoundConnectionLocator45Degree extends FoundConnectionLocator {
 
     TileShape shrinkedRoomShape = (TileShape) roomShape.offset(-shrinkOffset);
     if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-      FRLogger.trace(
-          "compare_trace_room_shrink_raw net="
-              + this.ctrl.netNumber
-              + ", mode=45"
-              + ", layer="
-              + this.currentTraceLayer
-              + ", from_door="
-              + this.currentFromDoorIndex
-              + ", to_door="
-              + this.currentToDoorIndex
-              + ", target_door="
-              + this.currentTargetDoorIndex
-              + ", next_room_type="
-              + currentFromInfo.nextRoom.getClass().getSimpleName()
-              + ", shrinkOffset="
-              + shrinkOffset
-              + ", room_empty="
-              + roomShape.isEmpty()
-              + ", shrinked_empty="
-              + shrinkedRoomShape.isEmpty()
-              + ", current_from="
-              + this.currentFromPoint);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_room_shrink_raw net="
+                + this.ctrl.netNumber
+                + ", mode=45"
+                + ", layer="
+                + this.currentTraceLayer
+                + ", from_door="
+                + this.currentFromDoorIndex
+                + ", to_door="
+                + this.currentToDoorIndex
+                + ", target_door="
+                + this.currentTargetDoorIndex
+                + ", next_room_type="
+                + currentFromInfo.nextRoom.getClass().getSimpleName()
+                + ", shrinkOffset="
+                + shrinkOffset
+                + ", room_empty="
+                + roomShape.isEmpty()
+                + ", shrinked_empty="
+                + shrinkedRoomShape.isEmpty()
+                + ", current_from="
+                + this.currentFromPoint);
+      }
     }
     if (!shrinkedRoomShape.isEmpty()) {
       // enter the shrunk room shape by a 45-degree angle first
@@ -203,24 +207,26 @@ public class FoundConnectionLocator45Degree extends FoundConnectionLocator {
       result.add(nearestPoint);
       ++this.currentToDoorIndex;
       if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-        FRLogger.trace(
-            "compare_trace_next_corners_raw net="
-                + this.ctrl.netNumber
-                + ", mode=45, branch=TARGET_DOOR"
-                + ", layer="
-                + this.currentTraceLayer
-                + ", from_door="
-                + this.currentFromDoorIndex
-                + ", to_door="
-                + this.currentToDoorIndex
-                + ", target_door="
-                + this.currentTargetDoorIndex
-                + ", result_size="
-                + result.size()
-                + ", nearestPoint="
-                + nearestPoint
-                + ", addCorner="
-                + addCorner);
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_next_corners_raw net="
+                  + this.ctrl.netNumber
+                  + ", mode=45, branch=TARGET_DOOR"
+                  + ", layer="
+                  + this.currentTraceLayer
+                  + ", from_door="
+                  + this.currentFromDoorIndex
+                  + ", to_door="
+                  + this.currentToDoorIndex
+                  + ", target_door="
+                  + this.currentTargetDoorIndex
+                  + ", result_size="
+                  + result.size()
+                  + ", nearestPoint="
+                  + nearestPoint
+                  + ", addCorner="
+                  + addCorner);
+        }
       }
       return result;
     }
@@ -290,24 +296,26 @@ public class FoundConnectionLocator45Degree extends FoundConnectionLocator {
     result.add(nearestToDoorPoint);
     ++this.currentToDoorIndex;
     if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-      FRLogger.trace(
-          "compare_trace_next_corners_raw net="
-              + this.ctrl.netNumber
-              + ", mode=45, branch=EXPANSION_DOOR"
-              + ", layer="
-              + this.currentTraceLayer
-              + ", from_door="
-              + this.currentFromDoorIndex
-              + ", to_door="
-              + this.currentToDoorIndex
-              + ", target_door="
-              + this.currentTargetDoorIndex
-              + ", result_size="
-              + result.size()
-              + ", nearestToDoorPoint="
-              + nearestToDoorPoint
-              + ", horizontalFirst="
-              + horizontalFirst);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_next_corners_raw net="
+                + this.ctrl.netNumber
+                + ", mode=45, branch=EXPANSION_DOOR"
+                + ", layer="
+                + this.currentTraceLayer
+                + ", from_door="
+                + this.currentFromDoorIndex
+                + ", to_door="
+                + this.currentToDoorIndex
+                + ", target_door="
+                + this.currentTargetDoorIndex
+                + ", result_size="
+                + result.size()
+                + ", nearestToDoorPoint="
+                + nearestToDoorPoint
+                + ", horizontalFirst="
+                + horizontalFirst);
+      }
     }
     return result;
   }

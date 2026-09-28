@@ -164,6 +164,21 @@ public class ClearanceMatrix implements Serializable {
     int finalValue =
         addSafetyMargin ? valueFromTheMatrix + clearance_safety_margin : valueFromTheMatrix;
 
+    if (FRLogger.isGranularTraceEnabled()) {
+      traceRetrievedValue(classI, classJ, layer, valueFromTheMatrix, finalValue, addSafetyMargin);
+    }
+
+    return finalValue;
+  }
+
+  /** Emits the granular trace for a retrieved clearance value. Only called when tracing is on. */
+  private void traceRetrievedValue(
+      int classI,
+      int classJ,
+      int layer,
+      int valueFromTheMatrix,
+      int finalValue,
+      boolean addSafetyMargin) {
     FRLogger.trace(
         "ClearanceMatrix.get_value",
         "clearance_retrieved",
@@ -196,8 +211,6 @@ public class ClearanceMatrix implements Serializable {
             + "mm)",
         "Clearance Check",
         new Point[0]);
-
-    return finalValue;
   }
 
   /**

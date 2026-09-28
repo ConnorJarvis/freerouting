@@ -350,6 +350,19 @@ public final class FRLogger {
   }
 
   /**
+   * Checks whether the granular (method/operation/impacted-items) trace path can produce any
+   * effect: either detailed logging was requested with {@code --debug.enable_detailed_logging}, or
+   * the interactive debug control is stepping or delaying trace insertions. Hot call sites use this
+   * check to skip building trace messages that would be discarded anyway.
+   *
+   * @return true if a granular trace call may log or trigger a debug breakpoint
+   */
+  public static boolean isGranularTraceEnabled() {
+    return (enabled && granularTraceEnabled)
+        || DebugControl.getInstance().isBreakpointCheckingActive();
+  }
+
+  /**
    * Checks if TRACE level logging is enabled.
    *
    * @return true if TRACE logging is enabled, false otherwise.

@@ -58,46 +58,52 @@ final class PolylineTraceNormalization {
     Collection<PolylineTrace> splitPieces = trace.split(clipShape);
     boolean result = splitPieces.size() != 1;
     if (debugNet49) {
-      FRLogger.trace(
-          "compare_trace_normalize_net49 depth="
-              + normalizationDepth
-              + ", thisId="
-              + trace.getId()
-              + ", thisOnBoard="
-              + trace.isOnTheBoard()
-              + ", thisFirst="
-              + trace.firstCorner()
-              + ", thisLast="
-              + trace.lastCorner()
-              + ", splitPieces="
-              + splitPieces.size());
-      for (PolylineTrace piece : splitPieces) {
+      if (FRLogger.isTraceEnabled()) {
         FRLogger.trace(
-            "compare_trace_normalize_net49  piece id="
-                + piece.getId()
-                + ", onBoard="
-                + piece.isOnTheBoard()
-                + ", first="
-                + piece.firstCorner()
-                + ", last="
-                + piece.lastCorner());
+            "compare_trace_normalize_net49 depth="
+                + normalizationDepth
+                + ", thisId="
+                + trace.getId()
+                + ", thisOnBoard="
+                + trace.isOnTheBoard()
+                + ", thisFirst="
+                + trace.firstCorner()
+                + ", thisLast="
+                + trace.lastCorner()
+                + ", splitPieces="
+                + splitPieces.size());
+      }
+      for (PolylineTrace piece : splitPieces) {
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_normalize_net49  piece id="
+                  + piece.getId()
+                  + ", onBoard="
+                  + piece.isOnTheBoard()
+                  + ", first="
+                  + piece.firstCorner()
+                  + ", last="
+                  + piece.lastCorner());
+        }
       }
     }
     for (PolylineTrace currentSplitTrace : splitPieces) {
       if (currentSplitTrace.isOnTheBoard()) {
         boolean traceCombined = currentSplitTrace.combine();
         if (debugNet49) {
-          FRLogger.trace(
-              "compare_trace_normalize_net49  after_combine id="
-                  + currentSplitTrace.getId()
-                  + ", onBoard="
-                  + currentSplitTrace.isOnTheBoard()
-                  + ", combined="
-                  + traceCombined
-                  + ", first="
-                  + (currentSplitTrace.isOnTheBoard() ? currentSplitTrace.firstCorner() : "N/A")
-                  + ", last="
-                  + (currentSplitTrace.isOnTheBoard() ? currentSplitTrace.lastCorner() : "N/A"));
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "compare_trace_normalize_net49  after_combine id="
+                    + currentSplitTrace.getId()
+                    + ", onBoard="
+                    + currentSplitTrace.isOnTheBoard()
+                    + ", combined="
+                    + traceCombined
+                    + ", first="
+                    + (currentSplitTrace.isOnTheBoard() ? currentSplitTrace.firstCorner() : "N/A")
+                    + ", last="
+                    + (currentSplitTrace.isOnTheBoard() ? currentSplitTrace.lastCorner() : "N/A"));
+          }
         }
         if (currentSplitTrace.cornerCount() == 2
             && currentSplitTrace.firstCorner().equals(currentSplitTrace.lastCorner())) {

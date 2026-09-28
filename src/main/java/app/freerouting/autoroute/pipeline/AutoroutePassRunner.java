@@ -188,7 +188,6 @@ final class AutoroutePassRunner {
       long initialProgressStatisticsStart =
           BatchAutorouter.isBenchmarkProfileEnabled() ? System.nanoTime() : 0;
       router.progressStatistics = new BoardStatistics(router.board, null, false);
-      router.progressItemsSinceStatistics = 0;
       final BoardStatistics stats = router.progressStatistics;
       if (BatchAutorouter.isBenchmarkProfileEnabled()) {
         router.profileBoardStatisticsNanos += System.nanoTime() - initialProgressStatisticsStart;
@@ -268,13 +267,13 @@ final class AutoroutePassRunner {
             router.profileAutorouteItemNanos += System.nanoTime() - routeItemStart;
           }
 
-          logRippedItems(currentItem, i, rippedItemList, rippedItemCosts);
-          if (FRLogger.isTraceEnabled()) {
+          if (FRLogger.isGranularTraceEnabled()) {
+            logRippedItems(currentItem, i, rippedItemList, rippedItemCosts);
             logTraceRouteComparison(
                 currentItem, i, autorouterResult, rippedItemList, netItemsBefore);
-          }
-          if (currentItem.getNetNumber(i) == 94) {
-            logNet94Items();
+            if (currentItem.getNetNumber(i) == 94) {
+              logNet94Items();
+            }
           }
 
           if (autorouterResult.state == AutorouteAttemptState.ROUTED) {
@@ -471,6 +470,7 @@ final class AutoroutePassRunner {
     }
   }
 
+  /** Only called when {@link FRLogger#isGranularTraceEnabled()} is true. */
   private void logRippedItems(
       Item currentItem,
       int netIndex,
@@ -507,6 +507,10 @@ final class AutoroutePassRunner {
     }
   }
 
+  /**
+   * Recomputes the ratsnest to emit a per-item routing comparison trace. Only called when {@link
+   * FRLogger#isGranularTraceEnabled()} is true, because the full DRC scan is expensive.
+   */
   private void logTraceRouteComparison(
       Item currentItem,
       int netIndex,
@@ -549,6 +553,7 @@ final class AutoroutePassRunner {
         router.getImpactedPoints(currentItem));
   }
 
+  /** Only called when {@link FRLogger#isGranularTraceEnabled()} is true. */
   private void logNet94Items() {
     FRLogger.trace(
         "BatchAutorouter.autoroute_pass",
@@ -606,34 +611,36 @@ final class AutoroutePassRunner {
       int notRouted,
       int routed,
       int skipped) {
-    router.progressItemsSinceStatistics++;
-    if (router.progressItemsSinceStatistics >= BatchAutorouter.PROGRESS_STATISTICS_ITEM_INTERVAL) {
-      long progressStatisticsStart =
-          BatchAutorouter.isBenchmarkProfileEnabled() ? System.nanoTime() : 0;
-      router.progressStatistics = new BoardStatistics(router.board, null, false);
-      router.progressItemsSinceStatistics = 0;
-      if (BatchAutorouter.isBenchmarkProfileEnabled()) {
-        router.profileBoardStatisticsNanos += System.nanoTime() - progressStatisticsStart;
-      }
+    if (!router.shouldFireBoardUpdate()) {
+      return;
     }
-
-    if (router.shouldFireBoardUpdate()) {
-      counters.queuedToBeRoutedCount = itemsToGoCount;
-      counters.skippedCount = skipped;
-      counters.rippedCount = rippedItemCount;
-      counters.failedToBeRoutedCount = notRouted;
-      counters.routedCount = routed;
-      counters.incompleteCount = router.calculateIncompleteCount(router.board);
-      router.fireBoardUpdatedEvent(router.progressStatistics, counters, router.board);
+    // The statistics are only consumed by the board-updated listeners, so they are computed right
+    // before the event instead of on a fixed item interval. The ratsnest scan inside
+    // BoardStatistics also yields the incomplete count, so it is not recomputed separately.
+    long updateStart = System.nanoTime();
+    router.progressStatistics = new BoardStatistics(router.board, null, false);
+    if (BatchAutorouter.isBenchmarkProfileEnabled()) {
+      router.profileBoardStatisticsNanos += System.nanoTime() - updateStart;
     }
+    counters.queuedToBeRoutedCount = itemsToGoCount;
+    counters.skippedCount = skipped;
+    counters.rippedCount = rippedItemCount;
+    counters.failedToBeRoutedCount = notRouted;
+    counters.routedCount = routed;
+    counters.incompleteCount = router.progressStatistics.connections.incompleteCount;
+    router.fireBoardUpdatedEvent(router.progressStatistics, counters, router.board);
+    router.progressUpdateThrottle.recordUpdateDuration(
+        (System.nanoTime() - updateStart) / 1_000_000L);
   }
 
   private void logTailRemoval(int passNo, int incompleteCount, boolean before) {
-    FRLogger.trace(
-        "BatchAutorouter.autoroute_pass",
-        "compare_trace_remove_tails",
-        "Incompletes " + (before ? "before" : "after") + " remove_tails=" + incompleteCount,
-        "Autorouter pass #" + passNo,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "BatchAutorouter.autoroute_pass",
+          "compare_trace_remove_tails",
+          "Incompletes " + (before ? "before" : "after") + " remove_tails=" + incompleteCount,
+          "Autorouter pass #" + passNo,
+          new Point[0]);
+    }
   }
 }

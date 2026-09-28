@@ -95,18 +95,30 @@ public class Log4j2ConfigurationFactory extends ConfigurationFactory {
                     .addAttribute("pattern", filePattern)); // Use the same pattern for stderr
     builder.add(stderrAppender);
 
+    // The root logger runs at the most verbose level any attached appender consumes. A root level
+    // of ALL would make FRLogger.isTraceEnabled() report true even when no appender ever writes
+    // TRACE output, so every TRACE call site would still build its message and run its guarded
+    // diagnostics for nothing.
+    Level consoleLevel =
+        consoleEnabled
+            ? parseLevel(getProperty("freerouting.logging.console.level", "INFO"))
+            : null;
+    boolean fileAppenderEnabled = fileEnabled && fileLocation != null && !fileLocation.isBlank();
+    Level fileLevel =
+        fileAppenderEnabled
+            ? parseLevel(getProperty("freerouting.logging.file.level", "DEBUG"))
+            : null;
+    Level rootLevel = mostVerbose(mostVerbose(Level.ERROR, consoleLevel), fileLevel);
+
     // Configure root logger
-    RootLoggerComponentBuilder rootLogger = builder.newRootLogger(Level.ALL);
+    RootLoggerComponentBuilder rootLogger = builder.newRootLogger(rootLevel);
 
     if (consoleEnabled) {
-      String consoleLevel = getProperty("freerouting.logging.console.level", "INFO");
-      rootLogger.add(
-          builder.newAppenderRef("Console").addAttribute("level", parseLevel(consoleLevel)));
+      rootLogger.add(builder.newAppenderRef("Console").addAttribute("level", consoleLevel));
     }
 
-    if (fileEnabled && fileLocation != null && !fileLocation.isBlank()) {
-      String fileLevel = getProperty("freerouting.logging.file.level", "DEBUG");
-      rootLogger.add(builder.newAppenderRef("File").addAttribute("level", parseLevel(fileLevel)));
+    if (fileAppenderEnabled) {
+      rootLogger.add(builder.newAppenderRef("File").addAttribute("level", fileLevel));
     }
 
     // Always add stderr for ERROR level
@@ -125,6 +137,17 @@ public class Log4j2ConfigurationFactory extends ConfigurationFactory {
   private boolean getBooleanProperty(String key, boolean defaultValue) {
     String value = System.getProperty(key);
     return value != null ? Boolean.parseBoolean(value) : defaultValue;
+  }
+
+  /** Returns the less specific (more verbose) of the two levels; {@code null} is ignored. */
+  static Level mostVerbose(Level first, Level second) {
+    if (second == null) {
+      return first;
+    }
+    if (first == null) {
+      return second;
+    }
+    return second.isLessSpecificThan(first) ? second : first;
   }
 
   private Level parseLevel(String level) {

@@ -444,16 +444,18 @@ public final class SortedOrthogonalRoomNeighbours {
     if (removeEdgeNo >= 0) {
       // Touching neighbour missing at the edge side with index removeEdgeNo
       // Remove the edge line and restart the algorithm.
-      FRLogger.trace(
-          "ROOM_EDGE_REMOVE start"
-              + ", net="
-              + netNumber
-              + ", layer="
-              + currentIncompleteRoom.getLayer()
-              + ", removeEdge="
-              + removeEdgeNo
-              + ", room_bounds="
-              + roomBox);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "ROOM_EDGE_REMOVE start"
+                + ", net="
+                + netNumber
+                + ", layer="
+                + currentIncompleteRoom.getLayer()
+                + ", removeEdge="
+                + removeEdgeNo
+                + ", room_bounds="
+                + roomBox);
+      }
       IntBox enlargedBox = removeBorderLine(roomBox, removeEdgeNo);
       Collection<ExpansionDoor> doorList = this.completedRoom.getDoors();
       TileShape ignoreShape = null;
@@ -471,74 +473,82 @@ public final class SortedOrthogonalRoomNeighbours {
               TileShape currentDoorShape = currentDoor.getShape();
               double currentDoorArea = currentDoorShape.area();
               ++ignoreCandidateCount;
-              FRLogger.trace(
-                  "ROOM_EDGE_REMOVE ignore_candidate"
-                      + ", net="
-                      + netNumber
-                      + ", layer="
-                      + currentIncompleteRoom.getLayer()
-                      + ", removeEdge="
-                      + removeEdgeNo
-                      + ", candidate_no="
-                      + ignoreCandidateCount
-                      + ", candidate_bounds="
-                      + currentDoorShape.boundingBox()
-                      + ", candidate_area="
-                      + currentDoorArea);
+              if (FRLogger.isTraceEnabled()) {
+                FRLogger.trace(
+                    "ROOM_EDGE_REMOVE ignore_candidate"
+                        + ", net="
+                        + netNumber
+                        + ", layer="
+                        + currentIncompleteRoom.getLayer()
+                        + ", removeEdge="
+                        + removeEdgeNo
+                        + ", candidate_no="
+                        + ignoreCandidateCount
+                        + ", candidate_bounds="
+                        + currentDoorShape.boundingBox()
+                        + ", candidate_area="
+                        + currentDoorArea);
+              }
               if (currentDoorArea > maxDoorArea) {
                 maxDoorArea = currentDoorArea;
                 ignoreShape = currentDoorShape;
                 ignoreObject = freeSpaceRoom;
-                FRLogger.trace(
-                    "ROOM_EDGE_REMOVE ignore_selected"
-                        + ", net="
-                        + netNumber
-                        + ", layer="
-                        + currentIncompleteRoom.getLayer()
-                        + ", removeEdge="
-                        + removeEdgeNo
-                        + ", reason=larger_area"
-                        + ", selected_bounds="
-                        + currentDoorShape.boundingBox()
-                        + ", selected_area="
-                        + currentDoorArea);
+                if (FRLogger.isTraceEnabled()) {
+                  FRLogger.trace(
+                      "ROOM_EDGE_REMOVE ignore_selected"
+                          + ", net="
+                          + netNumber
+                          + ", layer="
+                          + currentIncompleteRoom.getLayer()
+                          + ", removeEdge="
+                          + removeEdgeNo
+                          + ", reason=larger_area"
+                          + ", selected_bounds="
+                          + currentDoorShape.boundingBox()
+                          + ", selected_area="
+                          + currentDoorArea);
+                }
               } else if (Double.compare(currentDoorArea, maxDoorArea) == 0) {
                 ++equalAreaTieCount;
-                FRLogger.trace(
-                    "ROOM_EDGE_REMOVE ignore_tie"
-                        + ", net="
-                        + netNumber
-                        + ", layer="
-                        + currentIncompleteRoom.getLayer()
-                        + ", removeEdge="
-                        + removeEdgeNo
-                        + ", tie_no="
-                        + equalAreaTieCount
-                        + ", tie_bounds="
-                        + currentDoorShape.boundingBox()
-                        + ", tie_area="
-                        + currentDoorArea);
+                if (FRLogger.isTraceEnabled()) {
+                  FRLogger.trace(
+                      "ROOM_EDGE_REMOVE ignore_tie"
+                          + ", net="
+                          + netNumber
+                          + ", layer="
+                          + currentIncompleteRoom.getLayer()
+                          + ", removeEdge="
+                          + removeEdgeNo
+                          + ", tie_no="
+                          + equalAreaTieCount
+                          + ", tie_bounds="
+                          + currentDoorShape.boundingBox()
+                          + ", tie_area="
+                          + currentDoorArea);
+                }
               }
             }
           }
         }
       }
-      FRLogger.trace(
-          "ROOM_EDGE_REMOVE ignore_summary"
-              + ", net="
-              + netNumber
-              + ", layer="
-              + currentIncompleteRoom.getLayer()
-              + ", removeEdge="
-              + removeEdgeNo
-              + ", candidate_count="
-              + ignoreCandidateCount
-              + ", tie_count="
-              + equalAreaTieCount
-              + ", selected_bounds="
-              + (ignoreShape == null ? "null" : ignoreShape.boundingBox())
-              + ", selected_area="
-              + maxDoorArea);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "ROOM_EDGE_REMOVE ignore_summary"
+                + ", net="
+                + netNumber
+                + ", layer="
+                + currentIncompleteRoom.getLayer()
+                + ", removeEdge="
+                + removeEdgeNo
+                + ", candidate_count="
+                + ignoreCandidateCount
+                + ", tie_count="
+                + equalAreaTieCount
+                + ", selected_bounds="
+                + (ignoreShape == null ? "null" : ignoreShape.boundingBox())
+                + ", selected_area="
+                + maxDoorArea);
+      }
       IncompleteFreeSpaceExpansionRoom enlargedRoom =
           new IncompleteFreeSpaceExpansionRoom(
               enlargedBox,
@@ -546,34 +556,38 @@ public final class SortedOrthogonalRoomNeighbours {
               currentIncompleteRoom.getContainedShape());
       Collection<IncompleteFreeSpaceExpansionRoom> newRooms =
           autorouteSearchTree.completeShape(enlargedRoom, netNumber, ignoreObject, ignoreShape);
-      FRLogger.trace(
-          "ROOM_EDGE_REMOVE complete_shape"
-              + ", net="
-              + netNumber
-              + ", layer="
-              + currentIncompleteRoom.getLayer()
-              + ", removeEdge="
-              + removeEdgeNo
-              + ", enlarged_bounds="
-              + enlargedBox
-              + ", candidate_count="
-              + newRooms.size());
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "ROOM_EDGE_REMOVE complete_shape"
+                + ", net="
+                + netNumber
+                + ", layer="
+                + currentIncompleteRoom.getLayer()
+                + ", removeEdge="
+                + removeEdgeNo
+                + ", enlarged_bounds="
+                + enlargedBox
+                + ", candidate_count="
+                + newRooms.size());
+      }
       if (newRooms.size() == 1) {
         // Check, that the area increases to prevent endless loop.
         IncompleteFreeSpaceExpansionRoom newRoom = newRooms.iterator().next();
         if (newRoom.getShape().area() > roomArea) {
-          FRLogger.trace(
-              "ROOM_EDGE_REMOVE applied"
-                  + ", net="
-                  + netNumber
-                  + ", layer="
-                  + currentIncompleteRoom.getLayer()
-                  + ", removeEdge="
-                  + removeEdgeNo
-                  + ", old_bounds="
-                  + roomBox
-                  + ", newBounds="
-                  + newRoom.getShape().boundingBox());
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "ROOM_EDGE_REMOVE applied"
+                    + ", net="
+                    + netNumber
+                    + ", layer="
+                    + currentIncompleteRoom.getLayer()
+                    + ", removeEdge="
+                    + removeEdgeNo
+                    + ", old_bounds="
+                    + roomBox
+                    + ", newBounds="
+                    + newRoom.getShape().boundingBox());
+          }
           currentIncompleteRoom.setShape(newRoom.getShape());
           currentIncompleteRoom.setContainedShape(newRoom.getContainedShape());
           return true;

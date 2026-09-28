@@ -699,6 +699,11 @@ public class BasicBoard implements Serializable {
     return getItemRepository().getPins();
   }
 
+  /** Returns the number of pins on the board without materialising a pin collection. */
+  public int getPinCount() {
+    return getItemRepository().countPins();
+  }
+
   /** Returns the list of all pins on the board with only 1 layer. */
   public Collection<Pin> getSmdPins() {
     return getItemRepository().getSmdPins();
@@ -1285,6 +1290,7 @@ public class BasicBoard implements Serializable {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = itemList.undo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    incrementRevision();
     return result;
   }
 
@@ -1298,6 +1304,7 @@ public class BasicBoard implements Serializable {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = itemList.redo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    incrementRevision();
     return result;
   }
 

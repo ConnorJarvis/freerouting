@@ -182,23 +182,25 @@ public final class BatchFanout {
     // Negative ripup costs signal "no ripup" to RoutingBoard.fanout()
     int effectiveRipupCosts = ripupAllowed ? ripupCosts : -1;
 
-    FRLogger.trace(
-        "BatchFanout.fanout_pass",
-        "pass_start",
-        "pass="
-            + (passNo + 1)
-            + ", totalPins="
-            + this.totalSmdPinCount
-            + ", alreadyConnected="
-            + this.alreadyConnectedPinCount
-            + ", pinsToFanout="
-            + (this.totalSmdPinCount - this.alreadyConnectedPinCount)
-            + ", ripupCosts="
-            + effectiveRipupCosts
-            + ", baseMillisPerPin="
-            + baseMillisPerPin,
-        "",
-        new app.freerouting.geometry.planar.Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "BatchFanout.fanout_pass",
+          "pass_start",
+          "pass="
+              + (passNo + 1)
+              + ", totalPins="
+              + this.totalSmdPinCount
+              + ", alreadyConnected="
+              + this.alreadyConnectedPinCount
+              + ", pinsToFanout="
+              + (this.totalSmdPinCount - this.alreadyConnectedPinCount)
+              + ", ripupCosts="
+              + effectiveRipupCosts
+              + ", baseMillisPerPin="
+              + baseMillisPerPin,
+          "",
+          new app.freerouting.geometry.planar.Point[0]);
+    }
 
     this.progressThrottler.reset();
     BoardStatistics progressStats = new BoardStatistics(this.routingBoard, null, false);
@@ -258,23 +260,25 @@ public final class BatchFanout {
           }
         }
 
-        FRLogger.trace(
-            "BatchFanout.fanout_pass",
-            "pin_start",
-            "pin="
-                + fullPinName
-                + ", net="
-                + netNumber
-                + ", targetCount="
-                + targetCount
-                + ", center="
-                + currentPin.boardPin.getCenter()
-                + ", layer="
-                + currentPin.boardPin.firstLayer()
-                + ", pass="
-                + (passNo + 1),
-            fullPinName,
-            new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+        if (FRLogger.isGranularTraceEnabled()) {
+          FRLogger.trace(
+              "BatchFanout.fanout_pass",
+              "pin_start",
+              "pin="
+                  + fullPinName
+                  + ", net="
+                  + netNumber
+                  + ", targetCount="
+                  + targetCount
+                  + ", center="
+                  + currentPin.boardPin.getCenter()
+                  + ", layer="
+                  + currentPin.boardPin.firstLayer()
+                  + ", pass="
+                  + (passNo + 1),
+              fullPinName,
+              new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+        }
 
         int maxItemIdBeforeFanout = this.routingBoard.communication.idGenerator.maxGeneratedId();
         this.routingBoard.startMarkingChangedArea();
@@ -288,17 +292,19 @@ public final class BatchFanout {
           AutorouteAttemptResult fanoutDrcRejection =
               BatchAutorouter.enforceStrictDrc(this.routingBoard, netNumber, maxItemIdBeforeFanout);
           if (fanoutDrcRejection != null) {
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "fanout_via_reverted",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", reason="
-                    + fanoutDrcRejection.details,
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "fanout_via_reverted",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", reason="
+                      + fanoutDrcRejection.details,
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
             currentResult = fanoutDrcRejection;
           }
         }
@@ -307,96 +313,108 @@ public final class BatchFanout {
           case ROUTED -> {
             ++routedCount;
             this.totalItemsFanouted++;
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_routed",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", durationMs="
-                    + pinDurationMs
-                    + ", targetCount="
-                    + targetCount,
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_routed",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", durationMs="
+                      + pinDurationMs
+                      + ", targetCount="
+                      + targetCount,
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
           case ALREADY_CONNECTED -> {
             ++alreadyConnectedCount;
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_already_connected",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", targetCount="
-                    + targetCount
-                    + ", detail="
-                    + currentResult.details,
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_already_connected",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", targetCount="
+                      + targetCount
+                      + ", detail="
+                      + currentResult.details,
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
           case FAILED -> {
             ++notRoutedCount;
             this.totalItemsFanouted++;
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_failed",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", targetCount="
-                    + targetCount
-                    + ", durationMs="
-                    + pinDurationMs
-                    + ", detail="
-                    + (currentResult.details == null || currentResult.details.isEmpty()
-                        ? "no detail"
-                        : currentResult.details),
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_failed",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", targetCount="
+                      + targetCount
+                      + ", durationMs="
+                      + pinDurationMs
+                      + ", detail="
+                      + (currentResult.details == null || currentResult.details.isEmpty()
+                          ? "no detail"
+                          : currentResult.details),
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
           case INSERT_ERROR -> {
             ++insertErrorCount;
             this.totalItemsFanouted++;
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_insert_error",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", detail="
-                    + (currentResult.details == null || currentResult.details.isEmpty()
-                        ? "no detail"
-                        : currentResult.details),
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_insert_error",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", detail="
+                      + (currentResult.details == null || currentResult.details.isEmpty()
+                          ? "no detail"
+                          : currentResult.details),
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
           case NO_UNCONNECTED_NETS -> {
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_no_unconnected_nets",
-                "pin=" + fullPinName + ", net=" + netNumber + ", detail=" + currentResult.details,
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_no_unconnected_nets",
+                  "pin=" + fullPinName + ", net=" + netNumber + ", detail=" + currentResult.details,
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
           default -> {
-            FRLogger.trace(
-                "BatchFanout.fanout_pass",
-                "pin_other_state",
-                "pin="
-                    + fullPinName
-                    + ", net="
-                    + netNumber
-                    + ", state="
-                    + currentResult.state
-                    + ", detail="
-                    + currentResult.details,
-                fullPinName,
-                new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            if (FRLogger.isGranularTraceEnabled()) {
+              FRLogger.trace(
+                  "BatchFanout.fanout_pass",
+                  "pin_other_state",
+                  "pin="
+                      + fullPinName
+                      + ", net="
+                      + netNumber
+                      + ", state="
+                      + currentResult.state
+                      + ", detail="
+                      + currentResult.details,
+                  fullPinName,
+                  new app.freerouting.geometry.planar.Point[] {currentPin.boardPin.getCenter()});
+            }
           }
         }
         --pinsToGo;
@@ -462,30 +480,32 @@ public final class BatchFanout {
     EscapeStatistics escapeStats = EscapeStatistics.fromBoardStatistics(passStats);
 
     long passDurationMs = System.currentTimeMillis() - passStart;
-    FRLogger.trace(
-        "BatchFanout.fanout_pass",
-        "pass_end",
-        "pass="
-            + (passNo + 1)
-            + ", durationMs="
-            + passDurationMs
-            + ", routed="
-            + routedCount
-            + ", notRouted="
-            + notRoutedCount
-            + ", insertErrors="
-            + insertErrorCount
-            + ", alreadyConnected="
-            + alreadyConnectedCount
-            + ", escaped="
-            + escapeStats.escapedCount()
-            + "/"
-            + escapeStats.totalSmdPins()
-            + " ("
-            + String.format("%.1f", escapeStats.escapedPercentage())
-            + "%)",
-        "",
-        new app.freerouting.geometry.planar.Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "BatchFanout.fanout_pass",
+          "pass_end",
+          "pass="
+              + (passNo + 1)
+              + ", durationMs="
+              + passDurationMs
+              + ", routed="
+              + routedCount
+              + ", notRouted="
+              + notRoutedCount
+              + ", insertErrors="
+              + insertErrorCount
+              + ", alreadyConnected="
+              + alreadyConnectedCount
+              + ", escaped="
+              + escapeStats.escapedCount()
+              + "/"
+              + escapeStats.totalSmdPins()
+              + " ("
+              + String.format("%.1f", escapeStats.escapedPercentage())
+              + "%)",
+          "",
+          new app.freerouting.geometry.planar.Point[0]);
+    }
 
     if (progressListener == null) {
       FRLogger.info(

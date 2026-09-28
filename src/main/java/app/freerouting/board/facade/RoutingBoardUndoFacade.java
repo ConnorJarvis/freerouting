@@ -26,6 +26,7 @@ public final class RoutingBoardUndoFacade {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = board.itemList.undo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    board.incrementRevision();
     return result;
   }
 
@@ -35,6 +36,7 @@ public final class RoutingBoardUndoFacade {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = board.itemList.redo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    board.incrementRevision();
     return result;
   }
 
