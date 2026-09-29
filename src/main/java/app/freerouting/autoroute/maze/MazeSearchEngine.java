@@ -30,13 +30,10 @@ import app.freerouting.geometry.planar.Polyline;
 import app.freerouting.geometry.planar.TileShape;
 import app.freerouting.logger.FRLogger;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /** Class for auto-routing an incomplete connection via a maze search algorithm. */
 public class MazeSearchEngine {
@@ -49,7 +46,7 @@ public class MazeSearchEngine {
   final AutorouteControl ctrl;
 
   /** The queue of expanded elements used in this search algorithm. */
-  final SortedSet<MazeListElement> mazeExpansionList;
+  final MazeExpansionQueue mazeExpansionList;
 
   /**
    * Used for calculating of a good lower bound for the distance between a new MazeExpansionElement
@@ -82,50 +79,51 @@ public class MazeSearchEngine {
     this.expansionEngine = new MazeExpansionEngine(this);
     this.ripupResolver = new MazeRipupResolver(this);
     mazeExpansionList =
-        new TreeSet<>() {
-          @Override
-          public boolean add(MazeListElement element) {
-            if (ctrl.isFanout && ctrl.fanoutStartPinCenter != null) {
-              app.freerouting.geometry.planar.FloatPoint pinCenterFloat =
-                  ctrl.fanoutStartPinCenter.toFloat();
-              boolean onStartLayer =
-                  element.nextRoom != null
-                      && element.nextRoom.getLayer() == ctrl.fanoutStartPinLayer;
-              if (onStartLayer) {
-                double maxLen =
-                    ctrl.settings.fanout != null && ctrl.settings.fanout.maxEscapeLengthMm != null
-                        ? ctrl.settings.fanout.maxEscapeLengthMm * 1000.0
-                        : 3000.0;
-                double resolution =
-                    autorouteEngine.board.communication.getResolution(
-                        app.freerouting.board.model.structure.Unit.UM);
-                app.freerouting.geometry.planar.FloatPoint entryPoint =
-                    element.shapeEntry.a.middlePoint(element.shapeEntry.b);
-                double dist = entryPoint.distance(pinCenterFloat);
-                if (dist > maxLen * resolution) {
-                  return false;
-                }
-              }
-              if (element.door instanceof ExpansionDrill drill) {
-                double minLen =
-                    ctrl.settings.fanout != null && ctrl.settings.fanout.minEscapeLengthMm != null
-                        ? ctrl.settings.fanout.minEscapeLengthMm * 1000.0
-                        : 500.0;
-                double resolution =
-                    autorouteEngine.board.communication.getResolution(
-                        app.freerouting.board.model.structure.Unit.UM);
-                double drillDist = drill.location.toFloat().distance(pinCenterFloat);
-                if (drillDist < minLen * resolution) {
-                  return false;
-                }
-              }
-            }
-            return super.add(element);
-          }
-        };
+        ctrl.isFanout && ctrl.fanoutStartPinCenter != null
+            ? new MazeExpansionQueue(this::isWithinFanoutEscapeLimits)
+            : new MazeExpansionQueue();
     destinationDistance =
         new DestinationDistance(
             ctrl.traceCosts, ctrl.layerActive, ctrl.minNormalViaCost, ctrl.minCheapViaCost);
+  }
+
+  /**
+   * Fanout-only admission filter for the open list: rejects escape routes that leave the start
+   * layer too far from the pin and drills that are too close to it.
+   */
+  private boolean isWithinFanoutEscapeLimits(MazeListElement element) {
+    app.freerouting.geometry.planar.FloatPoint pinCenterFloat = ctrl.fanoutStartPinCenter.toFloat();
+    boolean onStartLayer =
+        element.nextRoom != null && element.nextRoom.getLayer() == ctrl.fanoutStartPinLayer;
+    if (onStartLayer) {
+      double maxLen =
+          ctrl.settings.fanout != null && ctrl.settings.fanout.maxEscapeLengthMm != null
+              ? ctrl.settings.fanout.maxEscapeLengthMm * 1000.0
+              : 3000.0;
+      double resolution =
+          autorouteEngine.board.communication.getResolution(
+              app.freerouting.board.model.structure.Unit.UM);
+      app.freerouting.geometry.planar.FloatPoint entryPoint =
+          element.shapeEntry.a.middlePoint(element.shapeEntry.b);
+      double dist = entryPoint.distance(pinCenterFloat);
+      if (dist > maxLen * resolution) {
+        return false;
+      }
+    }
+    if (element.door instanceof ExpansionDrill drill) {
+      double minLen =
+          ctrl.settings.fanout != null && ctrl.settings.fanout.minEscapeLengthMm != null
+              ? ctrl.settings.fanout.minEscapeLengthMm * 1000.0
+              : 500.0;
+      double resolution =
+          autorouteEngine.board.communication.getResolution(
+              app.freerouting.board.model.structure.Unit.UM);
+      double drillDist = drill.location.toFloat().distance(pinCenterFloat);
+      if (drillDist < minLen * resolution) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -324,9 +322,7 @@ public class MazeSearchEngine {
         return false;
       }
 
-      Iterator<MazeListElement> it = mazeExpansionList.iterator();
-      listElement = it.next();
-      it.remove();
+      listElement = mazeExpansionList.poll();
 
       int currentSectionNo = listElement.sectionNoOfDoor;
       currentDoorSection = listElement.door.getMazeSearchElement(currentSectionNo);
