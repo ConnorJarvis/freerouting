@@ -31,6 +31,13 @@ public class UndoableObjects implements Serializable {
 
   private boolean redoPossible;
 
+  /**
+   * Incremented on every change of the set of live objects (insert, delete, undo, redo). Callers
+   * use it to detect that a cached view of the object list is stale. Not serialised: a copy starts
+   * at zero and every cache derived from the copy starts empty as well.
+   */
+  private transient long modificationCount;
+
   /** Creates a new instance of UndoableObjectsList. */
   public UndoableObjects() {
     stackLevel = 0;
@@ -62,8 +69,14 @@ public class UndoableObjects implements Serializable {
     return null;
   }
 
+  /** Returns a counter that changes whenever the set of live objects changes. */
+  public long getModificationCount() {
+    return modificationCount;
+  }
+
   /** Adds object to the UndoableObjectsList. */
   public void insert(UndoableObjects.Storable object) {
+    ++modificationCount;
     disableRedo();
     UndoableObjectNode currentUndoableObject = new UndoableObjectNode(object, stackLevel);
     objects.put(object, currentUndoableObject);
@@ -74,6 +87,7 @@ public class UndoableObjects implements Serializable {
    * found in the list.
    */
   public boolean delete(UndoableObjects.Storable object) {
+    ++modificationCount;
     disableRedo();
     Collection<UndoableObjectNode> currentDeleteList;
     if (deletedObjectsStack.isEmpty()) {
@@ -146,6 +160,7 @@ public class UndoableObjects implements Serializable {
     if (stackLevel == 0) {
       return false; // no more undo possible
     }
+    ++modificationCount;
     for (UndoableObjectNode currentNode : objects.values()) {
       if (currentNode.level == stackLevel) {
         if (currentNode.undoObject != null) {
@@ -186,6 +201,7 @@ public class UndoableObjects implements Serializable {
     if (this.stackLevel >= deletedObjectsStack.size()) {
       return false; // already at the top level
     }
+    ++modificationCount;
     ++this.stackLevel;
     for (UndoableObjectNode currentNode : objects.values()) {
       if (currentNode.redoObject != null && currentNode.redoObject.level == this.stackLevel) {

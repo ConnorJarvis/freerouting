@@ -9,6 +9,7 @@ import app.freerouting.board.optimize.TraceTightener;
 import app.freerouting.board.searchtree.SearchTreeObject;
 import app.freerouting.board.searchtree.ShapeSearchTree;
 import app.freerouting.board.trace.PolylineTrace;
+import app.freerouting.datastructures.ShapeTree;
 import app.freerouting.geometry.planar.FloatPoint;
 import app.freerouting.geometry.planar.IntOctagon;
 import app.freerouting.geometry.planar.Point;
@@ -18,8 +19,10 @@ import app.freerouting.rules.Net;
 import app.freerouting.rules.Nets;
 import app.freerouting.util.TextManager;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -70,6 +73,9 @@ public abstract class Trace extends Item implements Connectable, Serializable {
 
   public void setLayer(int layer) {
     this.layer = layer;
+    if (board != null) {
+      board.noteConnectivityAttributeChanged();
+    }
   }
 
   public int getHalfWidth() {
@@ -171,11 +177,67 @@ public abstract class Trace extends Item implements Connectable, Serializable {
    * is the normal case.
    */
   public Set<Item> getNormalContacts(Point point, boolean ignoreNet) {
-    if (point == null || !(point.equals(this.firstCorner()) || point.equals(this.lastCorner()))) {
+    if (point == null) {
       return new TreeSet<>();
     }
+    boolean atStart = point.equals(this.firstCorner());
+    if (!atStart && !point.equals(this.lastCorner())) {
+      return new TreeSet<>();
+    }
+    if (ignoreNet || board == null) {
+      return calculateNormalContacts(point, ignoreNet, null);
+    }
+    // Cycle detection and connected-set traversals ask for the contacts of the same traces over
+    // and over while the board is unchanged, and each answer costs two spatial queries. The result
+    // is cached per end point until anything that can change contacts happens on the board.
+    long revision = board.getConnectivityRevision();
+    CachedContacts cached = atStart ? cachedStartContacts : cachedEndContacts;
+    if (cached == null || cached.revision() != revision) {
+      List<ShapeTree.TreeEntry> consulted = new ArrayList<>();
+      Set<Item> contacts = calculateNormalContacts(point, false, consulted);
+      cached = new CachedContacts(revision, contacts, consulted);
+      if (atStart) {
+        cachedStartContacts = cached;
+      } else {
+        cachedEndContacts = cached;
+      }
+    } else {
+      cached.replayTreeShapeLookups(board.searchTreeManager.getDefaultTree());
+      if (CachedContacts.VERIFY) {
+        cached.verify(this, calculateNormalContacts(point, false, null));
+      } else if ("query".equals(CachedContacts.TOUCH)) {
+        board.overlappingObjects(TileShape.getInstance(point), this.layer);
+      } else if ("dfs".equals(CachedContacts.TOUCH)) {
+        board.searchTreeManager.getDefaultTree().touchOverlaps(TileShape.getInstance(point));
+      } else if ("shapes".equals(CachedContacts.TOUCH)) {
+        board
+            .searchTreeManager
+            .getDefaultTree()
+            .touchShapes(TileShape.getInstance(point), this.layer);
+      } else if ("consult".equals(CachedContacts.TOUCH)) {
+        List<ShapeTree.TreeEntry> fresh = new ArrayList<>();
+        board.overlappingObjects(TileShape.getInstance(point), this.layer, fresh);
+        cached.verifyConsulted(this, fresh);
+      }
+    }
+    return new TreeSet<>(cached.contacts());
+  }
+
+  // Each cache entry is one immutable holder so that a concurrent reader never sees a set paired
+  // with the wrong revision.
+  private transient CachedContacts cachedStartContacts;
+  private transient CachedContacts cachedEndContacts;
+
+  /**
+   * Computes the contacts at {@code point} with a spatial query; see {@link #getNormalContacts}.
+   */
+  private Set<Item> calculateNormalContacts(
+      Point point, boolean ignoreNet, List<ShapeTree.TreeEntry> consulted) {
     TileShape searchShape = TileShape.getInstance(point);
-    Set<SearchTreeObject> overlaps = board.overlappingObjects(searchShape, this.layer);
+    Set<SearchTreeObject> overlaps =
+        consulted != null
+            ? board.overlappingObjects(searchShape, this.layer, consulted)
+            : board.overlappingObjects(searchShape, this.layer);
     Set<Item> result = new TreeSet<>();
     for (SearchTreeObject currentObject : overlaps) {
       if (!(currentObject instanceof Item currentItem)) {

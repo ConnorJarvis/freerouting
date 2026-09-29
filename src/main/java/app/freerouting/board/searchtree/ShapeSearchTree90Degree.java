@@ -9,6 +9,7 @@ import app.freerouting.board.model.items.ObstacleArea;
 import app.freerouting.board.model.structure.BoardOutline;
 import app.freerouting.datastructures.ArrayStack;
 import app.freerouting.geometry.planar.IntBox;
+import app.freerouting.geometry.planar.IntOctagon;
 import app.freerouting.geometry.planar.OrthogonalBoundingDirections;
 import app.freerouting.geometry.planar.Polyline;
 import app.freerouting.geometry.planar.Shape;
@@ -73,6 +74,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       startShape = ((IntBox) room.getShape()).intersection(startShape);
     }
     IntBox boundingShape = startShape;
+    IntOctagon query = boundingShape.toIntOctagon();
     int roomLayer = room.getLayer();
     boolean debugAnchor = isCompleteShapeDebugAnchor(netNumber, roomLayer, startShape);
     int debugStep = 0;
@@ -92,7 +94,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       if (currentNode == null) {
         break;
       }
-      if (currentNode.boundingShape.intersects(boundingShape)) {
+      if (currentNode.boundsIntersect(boundingShape, query)) {
         if (currentNode instanceof Leaf currentLeaf) {
           SearchTreeObject currentObject = (SearchTreeObject) currentLeaf.object;
           int shapeIndex = currentLeaf.shapeIndexInObject;
@@ -196,6 +198,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
             }
             result = newResult;
             boundingShape = newBoundingShape;
+            query = boundingShape.toIntOctagon();
           }
           if (debugAnchor) {
             debugStep++;

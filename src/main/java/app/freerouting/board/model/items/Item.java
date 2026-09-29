@@ -449,7 +449,8 @@ public abstract class Item
           if (shape1 == null || shape2 == null) {
             FRLogger.warn(
                 String.format(
-                    "Item.clearanceViolations: unexpected null shape (%s is null) between item1=%s[id=%d, layer=%d] and item2=%s[id=%d, shapeIdx=%d]",
+                    "Item.clearanceViolations: unexpected null shape (%s is null) between"
+                        + " item1=%s[id=%d, layer=%d] and item2=%s[id=%d, shapeIdx=%d]",
                     shape1 == null ? "shape1" : "shape2",
                     this.getClass().getSimpleName(),
                     this.getId(),
@@ -983,6 +984,9 @@ public abstract class Item
           newNetNoArr.length - foundIndex);
     }
     this.netNumbers = newNetNoArr;
+    if (board != null) {
+      board.noteConnectivityAttributeChanged();
+    }
     return true;
   }
 
@@ -1049,6 +1053,7 @@ public abstract class Item
       }
       netNumbers[0] = netNumber;
     }
+    board.noteConnectivityAttributeChanged();
     if (this instanceof Pin) {
       board.invalidateEdgePinNetCache();
     }

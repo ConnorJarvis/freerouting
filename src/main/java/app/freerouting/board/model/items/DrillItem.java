@@ -6,6 +6,7 @@ import app.freerouting.board.model.structure.FixedState;
 import app.freerouting.board.searchtree.SearchTreeObject;
 import app.freerouting.board.searchtree.ShapeSearchTree;
 import app.freerouting.core.library.Padstack;
+import app.freerouting.datastructures.ShapeTree;
 import app.freerouting.geometry.planar.FloatPoint;
 import app.freerouting.geometry.planar.IntBox;
 import app.freerouting.geometry.planar.IntPoint;
@@ -15,9 +16,11 @@ import app.freerouting.geometry.planar.TileShape;
 import app.freerouting.geometry.planar.Vector;
 import app.freerouting.logger.FRLogger;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -272,9 +275,53 @@ public abstract class DrillItem extends Item implements Connectable, Serializabl
 
   @Override
   public Set<Item> getNormalContacts() {
+    if (board == null) {
+      return calculateNormalContacts(null);
+    }
+    // Cached until anything that can change contacts happens on the board; see
+    // BasicBoard.getConnectivityRevision().
+    long revision = board.getConnectivityRevision();
+    CachedContacts cached = cachedNormalContacts;
+    if (cached == null || cached.revision() != revision) {
+      List<ShapeTree.TreeEntry> consulted = new ArrayList<>();
+      Set<Item> contacts = calculateNormalContacts(consulted);
+      cached = new CachedContacts(revision, contacts, consulted);
+      cachedNormalContacts = cached;
+    } else {
+      cached.replayTreeShapeLookups(board.searchTreeManager.getDefaultTree());
+      if (CachedContacts.VERIFY) {
+        cached.verify(this, calculateNormalContacts(null));
+      } else if ("query".equals(CachedContacts.TOUCH)) {
+        board.overlappingObjects(TileShape.getInstance(this.getCenter()), -1);
+      } else if ("dfs".equals(CachedContacts.TOUCH)) {
+        board
+            .searchTreeManager
+            .getDefaultTree()
+            .touchOverlaps(TileShape.getInstance(this.getCenter()));
+      } else if ("shapes".equals(CachedContacts.TOUCH)) {
+        board
+            .searchTreeManager
+            .getDefaultTree()
+            .touchShapes(TileShape.getInstance(getCenter()), -1);
+      } else if ("consult".equals(CachedContacts.TOUCH)) {
+        List<ShapeTree.TreeEntry> fresh = new ArrayList<>();
+        board.overlappingObjects(TileShape.getInstance(this.getCenter()), -1, fresh);
+        cached.verifyConsulted(this, fresh);
+      }
+    }
+    return new TreeSet<>(cached.contacts());
+  }
+
+  private transient CachedContacts cachedNormalContacts;
+
+  /** Computes the contacts at the drill centre with a spatial query. */
+  private Set<Item> calculateNormalContacts(List<ShapeTree.TreeEntry> consulted) {
     Point drillCenter = this.getCenter();
     TileShape searchShape = TileShape.getInstance(drillCenter);
-    Set<SearchTreeObject> overlaps = board.overlappingObjects(searchShape, -1);
+    Set<SearchTreeObject> overlaps =
+        consulted != null
+            ? board.overlappingObjects(searchShape, -1, consulted)
+            : board.overlappingObjects(searchShape, -1);
     Set<Item> result = new TreeSet<>();
     for (SearchTreeObject currentObject : overlaps) {
       if (!(currentObject instanceof Item currentItem)) {

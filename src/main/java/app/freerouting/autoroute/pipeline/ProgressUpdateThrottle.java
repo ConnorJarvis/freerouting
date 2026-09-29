@@ -16,8 +16,12 @@ import java.util.function.LongSupplier;
  */
 final class ProgressUpdateThrottle {
 
-  /** Publish at most four times per second, as before the adaptive throttle existed. */
-  static final long MIN_INTERVAL_MS = 250;
+  /**
+   * Publish at most four times per second, as before the adaptive throttle existed. The system
+   * property {@code freerouting.progress.min_interval_ms} overrides it, mainly so that parity runs
+   * can switch progress updates off (any very large value) and compare boards without them.
+   */
+  static final long MIN_INTERVAL_MS = Long.getLong("freerouting.progress.min_interval_ms", 250L);
 
   /** Spend at most about one tenth of the wall time on progress reporting. */
   static final long COST_FACTOR = 10;
