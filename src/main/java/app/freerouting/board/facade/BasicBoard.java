@@ -24,6 +24,7 @@ import app.freerouting.board.state.Communication;
 import app.freerouting.board.trace.PolylineTrace;
 import app.freerouting.core.library.BoardLibrary;
 import app.freerouting.core.library.Padstack;
+import app.freerouting.datastructures.ShapeTree;
 import app.freerouting.datastructures.ShapeTree.TreeEntry;
 import app.freerouting.datastructures.UndoableObjects;
 import app.freerouting.geometry.planar.Area;
@@ -98,6 +99,10 @@ public class BasicBoard implements Serializable {
 
   private transient Set<Integer> normalizeSuppressedNetNos = new HashSet<>();
   private transient int revision;
+
+  /** Counts changes of item attributes (nets, layers) that affect contacts but not geometry. */
+  private transient long connectivityAttributeRevision;
+
   private transient BoardItemRepository itemRepository;
   private transient BoardConnectivityQueries connectivityQueries;
   private transient BoardSnapshotManager snapshotManager;
@@ -153,6 +158,25 @@ public class BasicBoard implements Serializable {
   /** Increment revision. */
   public void incrementRevision() {
     revision++;
+  }
+
+  /**
+   * Records a change of an item attribute that influences which items are in contact (net
+   * assignment, layer) without changing the item's search-tree entries.
+   */
+  public void noteConnectivityAttributeChanged() {
+    connectivityAttributeRevision++;
+  }
+
+  /**
+   * Returns a value that changes whenever the contacts between items may have changed: the set of
+   * items (item list), the geometry of any item (default search tree) or a contact-relevant item
+   * attribute. Cached contact sets are valid only while this value is unchanged.
+   */
+  public long getConnectivityRevision() {
+    long treeRevision =
+        searchTreeManager != null ? searchTreeManager.getDefaultTree().getModificationCount() : 0;
+    return itemList.getModificationCount() + treeRevision + connectivityAttributeRevision;
   }
 
   /** Serialize. */
@@ -699,6 +723,11 @@ public class BasicBoard implements Serializable {
     return getItemRepository().getPins();
   }
 
+  /** Returns the number of pins on the board without materialising a pin collection. */
+  public int getPinCount() {
+    return getItemRepository().countPins();
+  }
+
   /** Returns the list of all pins on the board with only 1 layer. */
   public Collection<Pin> getSmdPins() {
     return getItemRepository().getSmdPins();
@@ -960,6 +989,15 @@ public class BasicBoard implements Serializable {
    */
   public Set<SearchTreeObject> overlappingObjects(ConvexShape shape, int layer) {
     return this.searchTreeManager.getDefaultTree().overlappingObjects(shape, layer);
+  }
+
+  /**
+   * Like {@link #overlappingObjects(ConvexShape, int)}, recording the consulted tree entries; see
+   * {@link ShapeSearchTree#overlappingObjects(ConvexShape, int, Collection)}.
+   */
+  public Set<SearchTreeObject> overlappingObjects(
+      ConvexShape shape, int layer, Collection<ShapeTree.TreeEntry> consulted) {
+    return this.searchTreeManager.getDefaultTree().overlappingObjects(shape, layer, consulted);
   }
 
   /**
@@ -1285,6 +1323,7 @@ public class BasicBoard implements Serializable {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = itemList.undo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    incrementRevision();
     return result;
   }
 
@@ -1298,6 +1337,7 @@ public class BasicBoard implements Serializable {
     Collection<UndoableObjects.Storable> restoredObjects = new LinkedList<>();
     boolean result = itemList.redo(cancelledObjects, restoredObjects);
     applyUndoRedoSideEffects(cancelledObjects, restoredObjects, changedNets);
+    incrementRevision();
     return result;
   }
 

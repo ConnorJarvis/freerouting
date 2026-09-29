@@ -190,34 +190,36 @@ final class MazeExpansionEngine {
           firstMismatchLogged = true;
           CompleteExpansionRoom expansionRoom = fromElement.nextRoom;
           CompleteExpansionRoom drillRoom = currentDrill.roomArr[sectionIndex];
-          FRLogger.trace(
-              "FANOUT_DIAG event=first_room_mismatch_detail"
-                  + ", pin="
-                  + search.fanoutDiagnostics.labelForLog()
-                  + ", net="
-                  + ctrl.netNumber
-                  + ", drillLocation="
-                  + currentDrill.location
-                  + ", expansion_room_id="
-                  + System.identityHashCode(expansionRoom)
-                  + ", expansion_room_bounds="
-                  + (expansionRoom != null ? expansionRoom.getShape() : "null")
-                  + ", drill_room_id="
-                  + System.identityHashCode(drillRoom)
-                  + ", drill_room_bounds="
-                  + (drillRoom != null ? drillRoom.getShape() : "null")
-                  + ", from_door_type="
-                  + (fromElement.door != null
-                      ? fromElement.door.getClass().getSimpleName()
-                      : "null")
-                  + ", backtrack_door_type="
-                  + (fromElement.backtrackDoor != null
-                      ? fromElement.backtrackDoor.getClass().getSimpleName()
-                      : "null")
-                  + ", sectionIndex="
-                  + sectionIndex
-                  + ", layer="
-                  + fromRoomLayer);
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "FANOUT_DIAG event=first_room_mismatch_detail"
+                    + ", pin="
+                    + search.fanoutDiagnostics.labelForLog()
+                    + ", net="
+                    + ctrl.netNumber
+                    + ", drillLocation="
+                    + currentDrill.location
+                    + ", expansion_room_id="
+                    + System.identityHashCode(expansionRoom)
+                    + ", expansion_room_bounds="
+                    + (expansionRoom != null ? expansionRoom.getShape() : "null")
+                    + ", drill_room_id="
+                    + System.identityHashCode(drillRoom)
+                    + ", drill_room_bounds="
+                    + (drillRoom != null ? drillRoom.getShape() : "null")
+                    + ", from_door_type="
+                    + (fromElement.door != null
+                        ? fromElement.door.getClass().getSimpleName()
+                        : "null")
+                    + ", backtrack_door_type="
+                    + (fromElement.backtrackDoor != null
+                        ? fromElement.backtrackDoor.getClass().getSimpleName()
+                        : "null")
+                    + ", sectionIndex="
+                    + sectionIndex
+                    + ", layer="
+                    + fromRoomLayer);
+          }
         }
         continue;
       }

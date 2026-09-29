@@ -1,5 +1,7 @@
 package app.freerouting.datastructures;
 
+import app.freerouting.geometry.planar.IntBox;
+import app.freerouting.geometry.planar.IntOctagon;
 import app.freerouting.geometry.planar.RegularTileShape;
 import app.freerouting.geometry.planar.Shape;
 import app.freerouting.geometry.planar.ShapeBoundingDirections;
@@ -26,6 +28,12 @@ public abstract class ShapeTree {
   /** Protects the tree structure and the state of Leaves reachable from the tree. */
   private final ReentrantReadWriteLock treeLock = new ReentrantReadWriteLock();
 
+  /**
+   * Incremented on every structural change of the tree and on every in-place change of a leaf.
+   * Query results cached outside the tree are valid only while this value is unchanged.
+   */
+  private long modificationCount;
+
   /** Creates a new instance of ShapeTree. */
   protected ShapeTree(ShapeBoundingDirections directions) {
     boundingDirections = directions;
@@ -41,6 +49,16 @@ public abstract class ShapeTree {
   /** Returns the write lock used by this tree hierarchy. */
   protected final Lock writeLock() {
     return treeLock.writeLock();
+  }
+
+  /** Returns a counter that changes whenever the tree or one of its leaves changes. */
+  public final long getModificationCount() {
+    return modificationCount;
+  }
+
+  /** Records a change of the tree structure or of a leaf. Called with the write lock held. */
+  protected final void markModified() {
+    ++modificationCount;
   }
 
   /** Inserts all shapes of obj into the tree. */
@@ -225,11 +243,100 @@ public abstract class ShapeTree {
 
   //////////////////////////////////////////////////////////
 
+  /**
+   * Returns {@code shape} as an octagon. A box is converted the same way {@link
+   * IntBox#intersects(IntOctagon)} converts it, so octagon intersection tests on the result decide
+   * exactly like the polymorphic {@link RegularTileShape#intersects(Shape)} tests would.
+   */
+  public static IntOctagon toOctagon(RegularTileShape shape) {
+    if (shape instanceof IntOctagon octagon) {
+      return octagon;
+    }
+    return ((IntBox) shape).toIntOctagon();
+  }
+
   /** Common functionality of inner nodes and leaf nodes. */
   protected static class TreeNode {
 
+    /**
+     * The bounding shape of this node. Always assign it through {@link #setBoundingShape} so the
+     * octagon mirror used by the traversals stays in sync.
+     */
     public RegularTileShape boundingShape;
+
     InnerNode parent;
+
+    // The bounding shape as (possibly non-normalized) octagon coordinates. The traversals test
+    // these plain fields instead of dispatching through the shape object, which saves a
+    // dereference and two virtual calls per visited node on the hottest query path.
+    private boolean boundsAreBox;
+    private int boundsLeftX;
+    private int boundsBottomY;
+    private int boundsRightX;
+    private int boundsTopY;
+    private int boundsUpperLeftDiagonalX;
+    private int boundsLowerRightDiagonalX;
+    private int boundsLowerLeftDiagonalX;
+    private int boundsUpperRightDiagonalX;
+
+    /** Sets the bounding shape and refreshes the octagon mirror. */
+    void setBoundingShape(RegularTileShape shape) {
+      this.boundingShape = shape;
+      if (shape == null) {
+        return;
+      }
+      boundsAreBox = shape instanceof IntBox;
+      IntOctagon octagon = toOctagon(shape);
+      boundsLeftX = octagon.leftX;
+      boundsBottomY = octagon.bottomY;
+      boundsRightX = octagon.rightX;
+      boundsTopY = octagon.topY;
+      boundsUpperLeftDiagonalX = octagon.upperLeftDiagonalX;
+      boundsLowerRightDiagonalX = octagon.lowerRightDiagonalX;
+      boundsLowerLeftDiagonalX = octagon.lowerLeftDiagonalX;
+      boundsUpperRightDiagonalX = octagon.upperRightDiagonalX;
+    }
+
+    /**
+     * Returns {@code boundingShape.intersects(query)} for a box query. Between two boxes the
+     * polymorphic test is {@link IntBox#intersects(IntBox)}, which differs from the octagon test
+     * for degenerate boxes, so it is reproduced here; against octagon bounds the box is converted
+     * like {@link IntBox#intersects(IntOctagon)} does, which {@code queryAsOctagon} supplies.
+     */
+    public boolean boundsIntersect(IntBox query, IntOctagon queryAsOctagon) {
+      if (!boundsAreBox) {
+        return boundsIntersect(queryAsOctagon);
+      }
+      if (query.ll.x > boundsRightX) {
+        return false;
+      }
+      if (query.ll.y > boundsTopY) {
+        return false;
+      }
+      if (boundsLeftX > query.ur.x) {
+        return false;
+      }
+      return boundsBottomY <= query.ur.y;
+    }
+
+    /**
+     * Returns {@code boundingShape.intersects(query)} evaluated on the octagon mirror; identical to
+     * {@link IntOctagon#intersects(IntOctagon)} on the two octagons.
+     */
+    public boolean boundsIntersect(IntOctagon query) {
+      if (Math.max(query.leftX, boundsLeftX) > Math.min(query.rightX, boundsRightX)) {
+        return false;
+      }
+      if (Math.max(query.bottomY, boundsBottomY) > Math.min(query.topY, boundsTopY)) {
+        return false;
+      }
+      if (Math.max(query.lowerLeftDiagonalX, boundsLowerLeftDiagonalX)
+          > Math.min(query.upperRightDiagonalX, boundsUpperRightDiagonalX)) {
+        return false;
+      }
+      return Math.max(query.upperLeftDiagonalX, boundsUpperLeftDiagonalX)
+          <= Math.min(query.lowerRightDiagonalX, boundsLowerRightDiagonalX);
+    }
   }
 
   //////////////////////////////////////////////////////////
@@ -242,7 +349,7 @@ public abstract class ShapeTree {
 
     /** Creates an inner node with boundingShape and parent. */
     public InnerNode(RegularTileShape boundingShape, InnerNode parent) {
-      this.boundingShape = boundingShape;
+      setBoundingShape(boundingShape);
       this.parent = parent;
       firstChild = null;
       secondChild = null;
@@ -263,7 +370,7 @@ public abstract class ShapeTree {
     /** Creates a leaf node for object at index with parent and boundingShape. */
     public Leaf(
         ShapeTree.Storable object, int index, InnerNode parent, RegularTileShape boundingShape) {
-      this.boundingShape = boundingShape;
+      setBoundingShape(boundingShape);
       this.parent = parent;
       this.object = object;
       this.shapeIndexInObject = index;

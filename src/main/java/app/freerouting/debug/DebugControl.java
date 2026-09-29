@@ -142,6 +142,19 @@ public final class DebugControl {
   }
 
   /**
+   * Returns true when breakpoint checks can have an effect, i.e. single-step execution or a trace
+   * insertion delay is configured. When false, {@link #check(String, String)} always returns false
+   * without inspecting its arguments.
+   */
+  public boolean isBreakpointCheckingActive() {
+    if (Freerouting.globalSettings == null || Freerouting.globalSettings.debugSettings == null) {
+      return false;
+    }
+    return Freerouting.globalSettings.debugSettings.singleStepExecution
+        || Freerouting.globalSettings.debugSettings.traceInsertionDelay != 0;
+  }
+
+  /**
    * Called by the logging framework at potential breakpoints. Parses the impactedItems string to
    * extract net numbers for filtering.
    *

@@ -51,17 +51,19 @@ public final class FoundConnectionInserter {
             currentNewItem.corners.length > 0
                 ? currentNewItem.corners[currentNewItem.corners.length - 1]
                 : null;
-        FRLogger.trace(
-            "compare_trace_connection_item_raw net="
-                + ctrl.netNumber
-                + ", item_layer="
-                + currentNewItem.layer
-                + ", cornerCount="
-                + currentNewItem.corners.length
-                + ", start="
-                + formatPoint(startCorner)
-                + ", end="
-                + formatPoint(endCorner));
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_connection_item_raw net="
+                  + ctrl.netNumber
+                  + ", item_layer="
+                  + currentNewItem.layer
+                  + ", cornerCount="
+                  + currentNewItem.corners.length
+                  + ", start="
+                  + formatPoint(startCorner)
+                  + ", end="
+                  + formatPoint(endCorner));
+        }
       }
       if (!newInstance.insertVia(currentNewItem.corners[0], currentLayer, currentNewItem.layer)) {
         return null;
@@ -187,17 +189,19 @@ public final class FoundConnectionInserter {
               true,
               null);
       int maxItemIdAfterSeg = board.communication.idGenerator.maxGeneratedId();
-      FRLogger.trace(
-          "compare_trace_insert_segment_ids net="
-              + ctrl.netNumber
-              + ", i="
-              + i
-              + ", maxItemIdBefore="
-              + maxItemIdBeforeSeg
-              + ", maxItemIdAfter="
-              + maxItemIdAfterSeg
-              + ", delta="
-              + (maxItemIdAfterSeg - maxItemIdBeforeSeg));
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_insert_segment_ids net="
+                + ctrl.netNumber
+                + ", i="
+                + i
+                + ", maxItemIdBefore="
+                + maxItemIdBeforeSeg
+                + ", maxItemIdAfter="
+                + maxItemIdAfterSeg
+                + ", delta="
+                + (maxItemIdAfterSeg - maxItemIdBeforeSeg));
+      }
       boolean neckdownInserted = false;
       boolean microNeckdownInserted = false;
       if (okPoint != null
@@ -218,48 +222,52 @@ public final class FoundConnectionInserter {
       if (okPoint == insertPolyline.lastCorner() || neckdownInserted || microNeckdownInserted) {
         fromCornerNo = i;
         if (true) {
-          FRLogger.trace(
-              "compare_trace_insert_segment_raw net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=ADVANCE, neckdown="
-                  + neckdownInserted
-                  + ", micro_neckdown="
-                  + microNeckdownInserted
-                  + ", okPoint="
-                  + formatPoint(okPoint)
-                  + ", first="
-                  + formatPoint(insertPolyline.firstCorner())
-                  + ", last="
-                  + formatPoint(insertPolyline.lastCorner()));
-          FRLogger.trace(
-              "FoundConnectionInserter.insert_trace",
-              "compare_trace_insert_segment",
-              "net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=ADVANCE, neckdown="
-                  + neckdownInserted
-                  + ", micro_neckdown="
-                  + microNeckdownInserted
-                  + ", okPoint="
-                  + okPoint
-                  + ", first="
-                  + insertPolyline.firstCorner()
-                  + ", last="
-                  + insertPolyline.lastCorner(),
-              "Net #" + ctrl.netNumber,
-              new Point[0]);
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "compare_trace_insert_segment_raw net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=ADVANCE, neckdown="
+                    + neckdownInserted
+                    + ", micro_neckdown="
+                    + microNeckdownInserted
+                    + ", okPoint="
+                    + formatPoint(okPoint)
+                    + ", first="
+                    + formatPoint(insertPolyline.firstCorner())
+                    + ", last="
+                    + formatPoint(insertPolyline.lastCorner()));
+          }
+          if (FRLogger.isGranularTraceEnabled()) {
+            FRLogger.trace(
+                "FoundConnectionInserter.insert_trace",
+                "compare_trace_insert_segment",
+                "net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=ADVANCE, neckdown="
+                    + neckdownInserted
+                    + ", micro_neckdown="
+                    + microNeckdownInserted
+                    + ", okPoint="
+                    + okPoint
+                    + ", first="
+                    + insertPolyline.firstCorner()
+                    + ", last="
+                    + insertPolyline.lastCorner(),
+                "Net #" + ctrl.netNumber,
+                new Point[0]);
+          }
         }
       } else if (okPoint == insertPolyline.firstCorner() && i != trace.corners.length - 1) {
         // if okPoint == insertPolyline.firstCorner() the spring over may have failed.
@@ -276,46 +284,52 @@ public final class FoundConnectionInserter {
             --fromCornerNo;
           }
         }
-        FRLogger.trace("FoundConnectionInserter: violation corrected");
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace("FoundConnectionInserter: violation corrected");
+        }
         if (true) {
-          FRLogger.trace(
-              "compare_trace_insert_segment_raw net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=VIOLATION_CORRECTED, neckdown="
-                  + neckdownInserted
-                  + ", okPoint="
-                  + formatPoint(okPoint)
-                  + ", first="
-                  + formatPoint(insertPolyline.firstCorner())
-                  + ", last="
-                  + formatPoint(insertPolyline.lastCorner()));
-          FRLogger.trace(
-              "FoundConnectionInserter.insert_trace",
-              "compare_trace_insert_segment",
-              "net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=VIOLATION_CORRECTED, neckdown="
-                  + neckdownInserted
-                  + ", okPoint="
-                  + okPoint
-                  + ", first="
-                  + insertPolyline.firstCorner()
-                  + ", last="
-                  + insertPolyline.lastCorner(),
-              "Net #" + ctrl.netNumber,
-              new Point[0]);
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "compare_trace_insert_segment_raw net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=VIOLATION_CORRECTED, neckdown="
+                    + neckdownInserted
+                    + ", okPoint="
+                    + formatPoint(okPoint)
+                    + ", first="
+                    + formatPoint(insertPolyline.firstCorner())
+                    + ", last="
+                    + formatPoint(insertPolyline.lastCorner()));
+          }
+          if (FRLogger.isGranularTraceEnabled()) {
+            FRLogger.trace(
+                "FoundConnectionInserter.insert_trace",
+                "compare_trace_insert_segment",
+                "net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=VIOLATION_CORRECTED, neckdown="
+                    + neckdownInserted
+                    + ", okPoint="
+                    + okPoint
+                    + ", first="
+                    + insertPolyline.firstCorner()
+                    + ", last="
+                    + insertPolyline.lastCorner(),
+                "Net #" + ctrl.netNumber,
+                new Point[0]);
+          }
         }
       } else {
         FRLogger.debug(
@@ -356,48 +370,52 @@ public final class FoundConnectionInserter {
                 + ", target="
                 + formatPoint(insertPolyline.lastCorner()));
         if (true) {
-          FRLogger.trace(
-              "compare_trace_insert_segment_raw net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=FAIL, neckdown="
-                  + neckdownInserted
-                  + ", micro_neckdown="
-                  + microNeckdownInserted
-                  + ", okPoint="
-                  + formatPoint(okPoint)
-                  + ", first="
-                  + formatPoint(insertPolyline.firstCorner())
-                  + ", last="
-                  + formatPoint(insertPolyline.lastCorner()));
-          FRLogger.trace(
-              "FoundConnectionInserter.insert_trace",
-              "compare_trace_insert_segment",
-              "net="
-                  + ctrl.netNumber
-                  + ", layer="
-                  + trace.layer
-                  + ", i="
-                  + i
-                  + ", fromCornerNo="
-                  + fromCornerNo
-                  + ", decision=FAIL, neckdown="
-                  + neckdownInserted
-                  + ", micro_neckdown="
-                  + microNeckdownInserted
-                  + ", okPoint="
-                  + okPoint
-                  + ", first="
-                  + insertPolyline.firstCorner()
-                  + ", last="
-                  + insertPolyline.lastCorner(),
-              "Net #" + ctrl.netNumber,
-              new Point[0]);
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "compare_trace_insert_segment_raw net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=FAIL, neckdown="
+                    + neckdownInserted
+                    + ", micro_neckdown="
+                    + microNeckdownInserted
+                    + ", okPoint="
+                    + formatPoint(okPoint)
+                    + ", first="
+                    + formatPoint(insertPolyline.firstCorner())
+                    + ", last="
+                    + formatPoint(insertPolyline.lastCorner()));
+          }
+          if (FRLogger.isGranularTraceEnabled()) {
+            FRLogger.trace(
+                "FoundConnectionInserter.insert_trace",
+                "compare_trace_insert_segment",
+                "net="
+                    + ctrl.netNumber
+                    + ", layer="
+                    + trace.layer
+                    + ", i="
+                    + i
+                    + ", fromCornerNo="
+                    + fromCornerNo
+                    + ", decision=FAIL, neckdown="
+                    + neckdownInserted
+                    + ", micro_neckdown="
+                    + microNeckdownInserted
+                    + ", okPoint="
+                    + okPoint
+                    + ", first="
+                    + insertPolyline.firstCorner()
+                    + ", last="
+                    + insertPolyline.lastCorner(),
+                "Net #" + ctrl.netNumber,
+                new Point[0]);
+          }
         }
         result = false;
         break;
@@ -408,41 +426,45 @@ public final class FoundConnectionInserter {
     for (int i = 0; i < trace.corners.length - 1; i++) {
       Trace traceStub = board.getTraceTail(trace.corners[i], trace.layer, netNumbers);
       if (traceStub != null) {
-        FRLogger.trace(
-            "compare_trace_stub_found net="
-                + ctrl.netNumber
-                + ", corner_idx="
-                + i
-                + ", corner="
-                + trace.corners[i]
-                + ", stub_id="
-                + traceStub.getId()
-                + ", stub_first="
-                + traceStub.firstCorner()
-                + ", stub_last="
-                + traceStub.lastCorner()
-                + ", startContacts="
-                + traceStub.getStartContacts().size()
-                + ", endContacts="
-                + traceStub.getEndContacts().size());
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_stub_found net="
+                  + ctrl.netNumber
+                  + ", corner_idx="
+                  + i
+                  + ", corner="
+                  + trace.corners[i]
+                  + ", stub_id="
+                  + traceStub.getId()
+                  + ", stub_first="
+                  + traceStub.firstCorner()
+                  + ", stub_last="
+                  + traceStub.lastCorner()
+                  + ", startContacts="
+                  + traceStub.getStartContacts().size()
+                  + ", endContacts="
+                  + traceStub.getEndContacts().size());
+        }
         board.removeItem(traceStub);
         removedTraceStubs++;
       }
     }
 
-    FRLogger.trace(
-        "FoundConnectionInserter.insert_trace",
-        "compare_trace_stub_cleanup",
-        "net="
-            + ctrl.netNumber
-            + ", layer="
-            + trace.layer
-            + ", removed_stubs="
-            + removedTraceStubs
-            + ", trace_enabled="
-            + FRLogger.isTraceEnabled(),
-        "Net #" + ctrl.netNumber,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "FoundConnectionInserter.insert_trace",
+          "compare_trace_stub_cleanup",
+          "net="
+              + ctrl.netNumber
+              + ", layer="
+              + trace.layer
+              + ", removed_stubs="
+              + removedTraceStubs
+              + ", trace_enabled="
+              + FRLogger.isTraceEnabled(),
+          "Net #" + ctrl.netNumber,
+          new Point[0]);
+    }
 
     board.rules.setPinEdgeToTurnDist(savedEdgeToTurnDist);
     if (this.firstCorner == null) {
@@ -794,14 +816,16 @@ public final class FoundConnectionInserter {
     if (!shouldTraceFanoutDiagnostics()) {
       return;
     }
-    FRLogger.trace(
-        "FANOUT_DIAG event="
-            + event
-            + ", pin="
-            + ctrl.fanoutStartPinName
-            + ", net="
-            + ctrl.netNumber
-            + ", "
-            + message);
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "FANOUT_DIAG event="
+              + event
+              + ", pin="
+              + ctrl.fanoutStartPinName
+              + ", net="
+              + ctrl.netNumber
+              + ", "
+              + message);
+    }
   }
 }

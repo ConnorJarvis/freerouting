@@ -437,55 +437,61 @@ public class DesignRulesChecker {
     // Get all clearance violations
     Collection<ClearanceViolation> violations = getAllClearanceViolations();
 
-    FRLogger.trace(
-        "DesignRulesChecker.generateReport",
-        "drc_check_started",
-        "DRC check started: total_clearance_violations="
-            + violations.size()
-            + ", coordinate_unit="
-            + coordinateUnit
-            + ", source_file="
-            + sourceFile,
-        "DRC Check",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.generateReport",
+          "drc_check_started",
+          "DRC check started: total_clearance_violations="
+              + violations.size()
+              + ", coordinate_unit="
+              + coordinateUnit
+              + ", source_file="
+              + sourceFile,
+          "DRC Check",
+          new Point[0]);
+    }
 
     // Convert internal violations to DRC report format
     for (ClearanceViolation violation : violations) {
       KiCadDrcViolation kiCadDrcViolation = convertToDrcViolation(violation, coordinateUnit);
       report.addViolation(kiCadDrcViolation);
 
-      FRLogger.trace(
-          "DesignRulesChecker.generateReport",
-          "drc_violation",
-          "DRC violation: type=clearance"
-              + ", item1="
-              + violation.firstItem.toString()
-              + ", item2="
-              + violation.secondItem.toString()
-              + ", layer="
-              + violation.layer
-              + ", expected="
-              + (violation.expectedClearance / 10000.0)
-              + "mm"
-              + ", actual="
-              + (violation.actualClearance / 10000.0)
-              + "mm"
-              + ", delta="
-              + ((violation.expectedClearance - violation.actualClearance) / 10000.0)
-              + "mm",
-          "DRC Check",
-          new Point[] {violation.shape.centreOfGravity().round()});
+      if (FRLogger.isGranularTraceEnabled()) {
+        FRLogger.trace(
+            "DesignRulesChecker.generateReport",
+            "drc_violation",
+            "DRC violation: type=clearance"
+                + ", item1="
+                + violation.firstItem.toString()
+                + ", item2="
+                + violation.secondItem.toString()
+                + ", layer="
+                + violation.layer
+                + ", expected="
+                + (violation.expectedClearance / 10000.0)
+                + "mm"
+                + ", actual="
+                + (violation.actualClearance / 10000.0)
+                + "mm"
+                + ", delta="
+                + ((violation.expectedClearance - violation.actualClearance) / 10000.0)
+                + "mm",
+            "DRC Check",
+            new Point[] {violation.shape.centreOfGravity().round()});
+      }
     }
 
     // Get all unconnected items
     Collection<UnconnectedItems> unconnectedItems = getAllUnconnectedItems();
 
-    FRLogger.trace(
-        "DesignRulesChecker.generateReport",
-        "unconnectedItems",
-        "Unconnected items found: count=" + unconnectedItems.size(),
-        "DRC Check",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.generateReport",
+          "unconnectedItems",
+          "Unconnected items found: count=" + unconnectedItems.size(),
+          "DRC Check",
+          new Point[0]);
+    }
 
     // Convert unconnected items to DRC report format
     for (UnconnectedItems unconnectedItem : unconnectedItems) {
@@ -509,17 +515,19 @@ public class DesignRulesChecker {
       }
     }
 
-    FRLogger.trace(
-        "DesignRulesChecker.generateReport",
-        "drc_check_completed",
-        "DRC check completed: total_violations="
-            + report.violations.size()
-            + ", total_unconnected="
-            + report.unconnectedItems.size()
-            + ", total_zone_islands="
-            + zoneViolations.size(),
-        "DRC Check",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.generateReport",
+          "drc_check_completed",
+          "DRC check completed: total_violations="
+              + report.violations.size()
+              + ", total_unconnected="
+              + report.unconnectedItems.size()
+              + ", total_zone_islands="
+              + zoneViolations.size(),
+          "DRC Check",
+          new Point[0]);
+    }
 
     return report;
   }
@@ -869,18 +877,20 @@ public class DesignRulesChecker {
             .sum();
 
     int totalItems = netItemLists.stream().mapToInt(Collection::size).sum();
-    FRLogger.trace(
-        "DesignRulesChecker.calculateAllIncompletes",
-        "maxConnections",
-        "Calculated maxConnections="
-            + this.maxConnections
-            + ", total_items="
-            + totalItems
-            + ", netCount="
-            + netItemLists.size()
-            + " (formula: total_items - netCount)",
-        "Incomplete Count",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.calculateAllIncompletes",
+          "maxConnections",
+          "Calculated maxConnections="
+              + this.maxConnections
+              + ", total_items="
+              + totalItems
+              + ", netCount="
+              + netItemLists.size()
+              + " (formula: total_items - netCount)",
+          "Incomplete Count",
+          new Point[0]);
+    }
 
     int[] focusNets = new int[] {98, 99};
     for (int netNumber : focusNets) {
@@ -888,12 +898,14 @@ public class DesignRulesChecker {
         int netItemsCount = netItemLists.get(netNumber - 1).size();
         Net net = board.rules.nets.get(netNumber);
         String netName = net != null ? net.name : "unknown";
-        FRLogger.trace(
-            "DesignRulesChecker.calculateAllIncompletes",
-            "netItemCount",
-            "Net item count: net=" + netNumber + ", name=" + netName + ", items=" + netItemsCount,
-            "Net #" + netNumber + " (" + netName + ")",
-            new Point[0]);
+        if (FRLogger.isGranularTraceEnabled()) {
+          FRLogger.trace(
+              "DesignRulesChecker.calculateAllIncompletes",
+              "netItemCount",
+              "Net item count: net=" + netNumber + ", name=" + netName + ", items=" + netItemsCount,
+              "Net #" + netNumber + " (" + netName + ")",
+              new Point[0]);
+        }
 
         // Let's validate all the polyline traces for this net
         var netItems = netItemLists.get(netNumber - 1);
@@ -980,17 +992,19 @@ public class DesignRulesChecker {
       }
     }
 
-    FRLogger.trace(
-        "DesignRulesChecker.getIncompleteCount",
-        "total_incompletes_calculated",
-        "Total incomplete count: "
-            + result
-            + ", nets_with_incompletes="
-            + netsWithIncompletes
-            + ", first_few_nets="
-            + detailsBuilder.toString(),
-        "Incomplete Count",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.getIncompleteCount",
+          "total_incompletes_calculated",
+          "Total incomplete count: "
+              + result
+              + ", nets_with_incompletes="
+              + netsWithIncompletes
+              + ", first_few_nets="
+              + detailsBuilder.toString(),
+          "Incomplete Count",
+          new Point[0]);
+    }
 
     return result;
   }
@@ -1025,17 +1039,19 @@ public class DesignRulesChecker {
     Net net = board.rules.nets.get(netNumber);
     String netName = net != null ? net.name : "unknown";
 
-    FRLogger.trace(
-        "DesignRulesChecker.getIncompleteCount",
-        "net_incomplete_count",
-        "Net incomplete count: net="
-            + netNumber
-            + ", name="
-            + netName
-            + ", incompleteCount="
-            + result,
-        "Net #" + netNumber + " (" + netName + ")",
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "DesignRulesChecker.getIncompleteCount",
+          "net_incomplete_count",
+          "Net incomplete count: net="
+              + netNumber
+              + ", name="
+              + netName
+              + ", incompleteCount="
+              + result,
+          "Net #" + netNumber + " (" + netName + ")",
+          new Point[0]);
+    }
 
     return result;
   }
@@ -1169,7 +1185,8 @@ public class DesignRulesChecker {
       String explanation =
           String.format(
               Locale.US,
-              "Clearance violation between %s and %s on %s: required %.3f mm, found %.3f mm (shortfall: %.3f mm).",
+              "Clearance violation between %s and %s on %s: required %.3f mm, found %.3f mm"
+                  + " (shortfall: %.3f mm).",
               item1Desc,
               item2Desc,
               layerName,
@@ -1262,7 +1279,8 @@ public class DesignRulesChecker {
         explanation =
             String.format(
                 Locale.US,
-                "Copper pour on %s [net %s] is fragmented: island contains %d pin(s)/via(s) disconnected from main pour.",
+                "Copper pour on %s [net %s] is fragmented: island contains %d pin(s)/via(s)"
+                    + " disconnected from main pour.",
                 layerName,
                 netName,
                 zv.itemsInIsland.size());
@@ -1275,7 +1293,8 @@ public class DesignRulesChecker {
         explanation =
             String.format(
                 Locale.US,
-                "Dead copper island detected on %s [net %s]: area %.2f mm² with no electrical connections.",
+                "Dead copper island detected on %s [net %s]: area %.2f mm² with no electrical"
+                    + " connections.",
                 layerName,
                 netName,
                 areaMm2);
@@ -1393,7 +1412,8 @@ public class DesignRulesChecker {
                 clusterCount,
                 String.format(
                     Locale.US,
-                    "High bottleneck concentration: %d violations within %.1f mm of (%.2f, %.2f) mm.",
+                    "High bottleneck concentration: %d violations within %.1f mm of (%.2f, %.2f)"
+                        + " mm.",
                     clusterCount,
                     clusterRadiusMm,
                     avgX,
@@ -1421,7 +1441,8 @@ public class DesignRulesChecker {
         hints.add(
             String.format(
                 Locale.US,
-                "Maximum clearance shortfall is %.3f mm. Consider reducing trace width or clearance class threshold if manufacturing constraints permit.",
+                "Maximum clearance shortfall is %.3f mm. Consider reducing trace width or clearance"
+                    + " class threshold if manufacturing constraints permit.",
                 maxShortfall));
       }
     }
@@ -1430,7 +1451,8 @@ public class DesignRulesChecker {
       hints.add(
           String.format(
               Locale.US,
-              "Detected %d congested hotspot zone(s). Increasing pin escape distance or spreading component pads in these areas may resolve routing conflicts.",
+              "Detected %d congested hotspot zone(s). Increasing pin escape distance or spreading"
+                  + " component pads in these areas may resolve routing conflicts.",
               zones.size()));
     }
 
@@ -1442,13 +1464,15 @@ public class DesignRulesChecker {
       if (danglingCount > 0) {
         hints.add(
             danglingCount
-                + " dangling stub(s) detected. Running an optimizer cleanup pass will prune unneeded stubs.");
+                + " dangling stub(s) detected. Running an optimizer cleanup pass will prune"
+                + " unneeded stubs.");
       }
       long incompleteNetCount = unconnecteds.size() - danglingCount;
       if (incompleteNetCount > 0) {
         hints.add(
             incompleteNetCount
-                + " unrouted net connection(s) remain. Verify layer count or allow additional routing passes (-mp / maxPasses).");
+                + " unrouted net connection(s) remain. Verify layer count or allow additional"
+                + " routing passes (-mp / maxPasses).");
       }
     }
 

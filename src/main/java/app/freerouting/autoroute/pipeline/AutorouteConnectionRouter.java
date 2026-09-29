@@ -98,11 +98,13 @@ final class AutorouteConnectionRouter {
 
       if (autorouteResult.state == AutorouteAttemptState.ROUTED) {
         int maxItemIdBeforeOpt = router.board.communication.idGenerator.maxGeneratedId();
-        FRLogger.trace(
-            "compare_trace_opt_changed_area_before net="
-                + routeNetNo
-                + ", maxItemId="
-                + maxItemIdBeforeOpt);
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_opt_changed_area_before net="
+                  + routeNetNo
+                  + ", maxItemId="
+                  + maxItemIdBeforeOpt);
+        }
         long pullTightStart = BatchAutorouter.isBenchmarkProfileEnabled() ? System.nanoTime() : 0;
         router.board.optChangedArea(
             new int[0],
@@ -115,13 +117,15 @@ final class AutorouteConnectionRouter {
           router.addProfileOptChangedAreaNanos(System.nanoTime() - pullTightStart);
         }
         int maxItemIdAfterOpt = router.board.communication.idGenerator.maxGeneratedId();
-        FRLogger.trace(
-            "compare_trace_opt_changed_area_after net="
-                + routeNetNo
-                + ", maxItemId="
-                + maxItemIdAfterOpt
-                + ", delta="
-                + (maxItemIdAfterOpt - maxItemIdBeforeOpt));
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_opt_changed_area_after net="
+                  + routeNetNo
+                  + ", maxItemId="
+                  + maxItemIdAfterOpt
+                  + ", delta="
+                  + (maxItemIdAfterOpt - maxItemIdBeforeOpt));
+        }
       }
 
       if ((autorouteResult.state == AutorouteAttemptState.FAILED
@@ -255,12 +259,14 @@ final class AutorouteConnectionRouter {
     AutorouteAttemptResult rejection =
         BatchAutorouter.enforceStrictDrc(router.board, routeNetNo, maxItemIdBefore);
     if (rejection != null) {
-      FRLogger.trace(
-          "AutorouteConnectionRouter.apply_strict_drc",
-          "strict_drc_rejection",
-          "pass=" + ripupPassNo + ", net=" + routeNetNo + ", reason=" + rejection.details,
-          "",
-          null);
+      if (FRLogger.isGranularTraceEnabled()) {
+        FRLogger.trace(
+            "AutorouteConnectionRouter.apply_strict_drc",
+            "strict_drc_rejection",
+            "pass=" + ripupPassNo + ", net=" + routeNetNo + ", reason=" + rejection.details,
+            "",
+            null);
+      }
       if (boardSnapshotBeforeRoute != null) {
         router.board = (RoutingBoard) BasicBoard.deserialize(boardSnapshotBeforeRoute);
       }

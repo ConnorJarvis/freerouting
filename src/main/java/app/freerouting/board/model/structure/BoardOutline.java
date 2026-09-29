@@ -88,11 +88,26 @@ public class BoardOutline extends Item implements Serializable {
 
   private transient Set<Integer> edgePinNets;
   private transient int cachedItemCount = -1;
+  private transient int cachedBoardRevision;
 
+  /**
+   * Returns the nets of pins that touch or cross the outline. The set is recomputed only when the
+   * pin count changes, and the pin count itself is only re-checked when the board revision has
+   * changed since the last call. This method runs on every obstacle check against the outline, so
+   * it must not materialise the board's item list on each call.
+   */
   private Set<Integer> getEdgePinNets() {
-    int currentItemCount = this.board != null ? this.board.getPins().size() : -1;
+    if (this.edgePinNets != null && this.board != null) {
+      int boardRevision = this.board.getRevision();
+      if (boardRevision == this.cachedBoardRevision) {
+        return this.edgePinNets;
+      }
+      this.cachedBoardRevision = boardRevision;
+    }
+    int currentItemCount = this.board != null ? this.board.getPinCount() : -1;
     if (this.edgePinNets == null || this.cachedItemCount != currentItemCount) {
       this.cachedItemCount = currentItemCount;
+      this.cachedBoardRevision = this.board != null ? this.board.getRevision() : 0;
       Set<Integer> set = new HashSet<>();
       if (this.board != null) {
         for (Pin pin : this.board.getPins()) {

@@ -9,6 +9,7 @@ import app.freerouting.board.model.items.ObstacleArea;
 import app.freerouting.board.model.structure.BoardOutline;
 import app.freerouting.datastructures.ArrayStack;
 import app.freerouting.geometry.planar.IntBox;
+import app.freerouting.geometry.planar.IntOctagon;
 import app.freerouting.geometry.planar.OrthogonalBoundingDirections;
 import app.freerouting.geometry.planar.Polyline;
 import app.freerouting.geometry.planar.Shape;
@@ -73,6 +74,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       startShape = ((IntBox) room.getShape()).intersection(startShape);
     }
     IntBox boundingShape = startShape;
+    IntOctagon query = boundingShape.toIntOctagon();
     int roomLayer = room.getLayer();
     boolean debugAnchor = isCompleteShapeDebugAnchor(netNumber, roomLayer, startShape);
     int debugStep = 0;
@@ -92,7 +94,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       if (currentNode == null) {
         break;
       }
-      if (currentNode.boundingShape.intersects(boundingShape)) {
+      if (currentNode.boundsIntersect(boundingShape, query)) {
         if (currentNode instanceof Leaf currentLeaf) {
           SearchTreeObject currentObject = (SearchTreeObject) currentLeaf.object;
           int shapeIndex = currentLeaf.shapeIndexInObject;
@@ -196,6 +198,7 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
             }
             result = newResult;
             boundingShape = newBoundingShape;
+            query = boundingShape.toIntOctagon();
           }
           if (debugAnchor) {
             debugStep++;
@@ -228,7 +231,9 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
 
     TileShape containedShape = incompleteRoom.getContainedShape();
     if (containedShape == null || containedShape.isEmpty()) {
-      FRLogger.trace("BoxShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace("BoxShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      }
       return result;
     }
     IntBox roomShape = incompleteRoom.getShape().boundingBox();
@@ -368,52 +373,56 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       boolean sameLayer,
       boolean ignoredObject,
       SearchTreeObject object) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_FILTER"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", shapeIndex="
-            + shapeIndex
-            + ", object_layer="
-            + objectLayer
-            + ", is_trace_obstacle="
-            + isObstacle
-            + ", same_layer="
-            + sameLayer
-            + ", ignored_object="
-            + ignoredObject
-            + ", accepted="
-            + (isObstacle && sameLayer && !ignoredObject)
-            + ", obstacle_id="
-            + obstacleId(object)
-            + ", obstacle_nets="
-            + obstacleNets(object)
-            + ", obstacle="
-            + object);
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_FILTER"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", shapeIndex="
+              + shapeIndex
+              + ", object_layer="
+              + objectLayer
+              + ", is_trace_obstacle="
+              + isObstacle
+              + ", same_layer="
+              + sameLayer
+              + ", ignored_object="
+              + ignoredObject
+              + ", accepted="
+              + (isObstacle && sameLayer && !ignoredObject)
+              + ", obstacle_id="
+              + obstacleId(object)
+              + ", obstacle_nets="
+              + obstacleNets(object)
+              + ", obstacle="
+              + object);
+    }
   }
 
   private static void traceCompleteShapeCandidate(
       int step, int netNumber, int roomLayer, SearchTreeObject object, IntBox obstacleShape) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_OBS candidate"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", obstacle="
-            + object
-            + ", obstacle_id="
-            + obstacleId(object)
-            + ", obstacle_nets="
-            + obstacleNets(object)
-            + ", obstacle_bounds="
-            + describeBounds(obstacleShape));
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_OBS candidate"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", obstacle="
+              + object
+              + ", obstacle_id="
+              + obstacleId(object)
+              + ", obstacle_nets="
+              + obstacleNets(object)
+              + ", obstacle_bounds="
+              + describeBounds(obstacleShape));
+    }
   }
 
   private static void traceCompleteShapeDecision(
@@ -424,22 +433,24 @@ public class ShapeSearchTree90Degree extends ShapeSearchTree {
       boolean overlap,
       IntBox roomShape,
       IntBox obstacleShape) {
-    FRLogger.trace(
-        "COMPLETE_SHAPE_DECISION"
-            + ", step="
-            + step
-            + ", net="
-            + netNumber
-            + ", layer="
-            + roomLayer
-            + ", action="
-            + action
-            + ", overlap="
-            + overlap
-            + ", room_bounds="
-            + describeBounds(roomShape)
-            + ", obstacle_bounds="
-            + describeBounds(obstacleShape));
+    if (FRLogger.isTraceEnabled()) {
+      FRLogger.trace(
+          "COMPLETE_SHAPE_DECISION"
+              + ", step="
+              + step
+              + ", net="
+              + netNumber
+              + ", layer="
+              + roomLayer
+              + ", action="
+              + action
+              + ", overlap="
+              + overlap
+              + ", room_bounds="
+              + describeBounds(roomShape)
+              + ", obstacle_bounds="
+              + describeBounds(obstacleShape));
+    }
   }
 
   private static int obstacleId(SearchTreeObject object) {

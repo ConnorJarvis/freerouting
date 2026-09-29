@@ -5,28 +5,9 @@ import java.math.BigInteger;
 /** Auxiliary functions with BigInteger parameters. */
 public final class BigIntAux {
 
-  /*
-   * trailingZeroTable[i] is the number of trailing zero bits in the binary
-   * representation of i.
-   */
-  static final byte[] trailingZeroTable = {
-    -25, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0, 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1,
-    0
-  };
-
   private BigIntAux() {
     // disallow instantiation
   }
-
-  // the following function binaryGcd is copied from private parts of java.math
-  // because we need it public.
 
   /** Calculates the determinant of the vectors (x1, y1) and (x2, y2). */
   public static BigInteger determinant(BigInteger x1, BigInteger y1, BigInteger x2, BigInteger y2) {
@@ -69,45 +50,20 @@ public final class BigIntAux {
     if (a == 0) {
       return b;
     }
-
-    int x;
-    int leadingZeroCountA = 0;
-    while ((x = a & 0xff) == 0) {
-      a >>>= 8;
-      leadingZeroCountA += 8;
-    }
-    int y = trailingZeroTable[x];
-    leadingZeroCountA += y;
-    a >>>= y;
-
-    int leadingZeroCountB = 0;
-    while ((x = b & 0xff) == 0) {
-      b >>>= 8;
-      leadingZeroCountB += 8;
-    }
-    y = trailingZeroTable[x];
-    leadingZeroCountB += y;
-    b >>>= y;
-
-    int t = Math.min(leadingZeroCountA, leadingZeroCountB);
-
-    while (a != b) {
-      if ((a + 0x80000000) > (b + 0x80000000)) { // a > b as unsigned
-        a -= b;
-
-        while ((x = a & 0xff) == 0) {
-          a >>>= 8;
-        }
-        a >>>= trailingZeroTable[x];
-      } else {
-        b -= a;
-
-        while ((x = b & 0xff) == 0) {
-          b >>>= 8;
-        }
-        b >>>= trailingZeroTable[x];
+    // Stein's algorithm on unsigned values, using the hardware trailing-zero count instead of the
+    // byte-table loops of the original java.math copy. The greatest common divisor is unique, so
+    // the result is the same.
+    int commonShift = Integer.numberOfTrailingZeros(a | b);
+    a >>>= Integer.numberOfTrailingZeros(a);
+    do {
+      b >>>= Integer.numberOfTrailingZeros(b);
+      if (Integer.compareUnsigned(a, b) > 0) {
+        int swap = a;
+        a = b;
+        b = swap;
       }
-    }
-    return a << t;
+      b -= a;
+    } while (b != 0);
+    return a << commonShift;
   }
 }

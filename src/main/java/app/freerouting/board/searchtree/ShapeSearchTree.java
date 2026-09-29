@@ -133,6 +133,7 @@ public class ShapeSearchTree extends MinAreaTree {
 
   private void changeEntriesUnlocked(
       PolylineTrace obj, Polyline newPolyline, int keepAtStartCount, int keepAtEndCount) {
+    markModified();
     // calculate the shapes of newPolyline from keepAtStartCount to
     // newShapeCount - keepAtEndCount - 1;
     int compensatedHalfWidth =
@@ -202,6 +203,7 @@ public class ShapeSearchTree extends MinAreaTree {
       Polyline joinedPolyline,
       int fromEntryNo,
       int toEntryNo) {
+    markModified();
     boolean changeOrder = fromTrace.firstCorner().equals(toTrace.firstCorner());
     // remove the last or first tree entry from fromTrace and the
     // first tree entry from toTrace, because they will be replaced by
@@ -292,6 +294,7 @@ public class ShapeSearchTree extends MinAreaTree {
       Polyline joinedPolyline,
       int fromEntryNo,
       int toEntryNo) {
+    markModified();
     boolean changeOrder = fromTrace.lastCorner().equals(toTrace.lastCorner());
     Leaf[] fromTraceEntries = fromTrace.getSearchTreeEntries(this);
     Leaf[] toTraceEntries = toTrace.getSearchTreeEntries(this);
@@ -372,6 +375,7 @@ public class ShapeSearchTree extends MinAreaTree {
 
   private void reuseEntriesAfterCutoutUnlocked(
       PolylineTrace fromTrace, PolylineTrace startPiece, PolylineTrace endPiece) {
+    markModified();
     Leaf[] startPieceLeafArr = new Leaf[startPiece.polyline().lines.length - 2];
     Leaf[] fromTraceEntries = fromTrace.getSearchTreeEntries(this);
     // transfer the entries at the start of fromTrace to startPiece.
@@ -429,6 +433,69 @@ public class ShapeSearchTree extends MinAreaTree {
   }
 
   /**
+   * Diagnostic: performs the tree traversal for {@code shape} and the tree-shape lookup of every
+   * leaf on {@code layer}, without the exact intersection test, and discards the result.
+   */
+  public void touchShapes(ConvexShape shape, int layer) {
+    RegularTileShape bounds = shape.boundingShape(boundingDirections);
+    if (bounds == null) {
+      return;
+    }
+    Lock lock = readLock();
+    lock.lock();
+    try {
+      for (Leaf currentLeaf : this.overlapsUnlocked(bounds)) {
+        SearchTreeObject currentObject = (SearchTreeObject) currentLeaf.object;
+        int shapeIndex = currentLeaf.shapeIndexInObject;
+        if (layer < 0 || currentObject.shapeLayer(shapeIndex) == layer) {
+          currentObject.getTreeShape(this, shapeIndex);
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /** Diagnostic: performs only the tree traversal for {@code shape} and discards the result. */
+  public void touchOverlaps(ConvexShape shape) {
+    RegularTileShape bounds = shape.boundingShape(boundingDirections);
+    if (bounds == null) {
+      return;
+    }
+    Lock lock = readLock();
+    lock.lock();
+    try {
+      overlapsUnlocked(bounds);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Like {@link #overlappingObjects(ConvexShape, int)}, and additionally records into {@code
+   * consulted}, in traversal order, every tree entry whose tree shape the query looked up, whether
+   * or not the entry ended up in the result. Looking a tree shape up is not free of side effects
+   * ({@code Item.getTreeShape} may recompute the item's derived data), so a caller that answers a
+   * repeated query from a cache can replay exactly those lookups to stay equivalent to the query.
+   */
+  public Set<SearchTreeObject> overlappingObjects(
+      ConvexShape shape, int layer, Collection<TreeEntry> consulted) {
+    Set<SearchTreeObject> result = new TreeSet<>();
+    Collection<TreeEntry> treeEntries = new LinkedList<>();
+    Lock lock = readLock();
+    lock.lock();
+    try {
+      overlappingTreeEntriesUnlocked(shape, layer, new int[0], treeEntries, consulted);
+    } finally {
+      lock.unlock();
+    }
+    for (TreeEntry currentEntry : treeEntries) {
+      result.add((SearchTreeObject) currentEntry.object);
+    }
+    return result;
+  }
+
+  /**
    * Puts all tree entries overlapping with shape on layer layer into the list obstacles. If layer
    * {@literal <} 0, the layer is ignored.
    */
@@ -447,14 +514,18 @@ public class ShapeSearchTree extends MinAreaTree {
     Lock lock = readLock();
     lock.lock();
     try {
-      overlappingTreeEntriesUnlocked(shape, layer, ignoreNetNos, treeEntries);
+      overlappingTreeEntriesUnlocked(shape, layer, ignoreNetNos, treeEntries, null);
     } finally {
       lock.unlock();
     }
   }
 
   private void overlappingTreeEntriesUnlocked(
-      ConvexShape shape, int layer, int[] ignoreNetNos, Collection<TreeEntry> treeEntries) {
+      ConvexShape shape,
+      int layer,
+      int[] ignoreNetNos,
+      Collection<TreeEntry> treeEntries,
+      Collection<TreeEntry> consulted) {
     if (shape == null) {
       return;
     }
@@ -482,6 +553,9 @@ public class ShapeSearchTree extends MinAreaTree {
         }
       }
       if (!ignoreObject) {
+        if (consulted != null) {
+          consulted.add(new TreeEntry(currentObject, shapeIndex));
+        }
         TileShape currentShape = currentObject.getTreeShape(this, currentLeaf.shapeIndexInObject);
         boolean addItem;
         if (is45Degree && currentShape instanceof IntOctagon) {
@@ -708,6 +782,8 @@ public class ShapeSearchTree extends MinAreaTree {
     // in a deterministic order. The non-deterministic order of tree traversal
     // causes different room partitioning.
     List<Leaf> overlappingLeaves = new ArrayList<>();
+    IntOctagon query = toOctagon(boundingShape);
+    IntBox boxQuery = boundingShape instanceof IntBox box ? box : null;
     ArrayStack<TreeNode> stack = completeShapeStack.get();
     stack.reset();
     stack.push(this.root);
@@ -715,7 +791,11 @@ public class ShapeSearchTree extends MinAreaTree {
     int roomLayer = room.getLayer();
 
     while ((currentNode = stack.pop()) != null) {
-      if (currentNode.boundingShape.intersects(boundingShape)) {
+      boolean intersects =
+          boxQuery != null
+              ? currentNode.boundsIntersect(boxQuery, query)
+              : currentNode.boundsIntersect(query);
+      if (intersects) {
         if (currentNode instanceof Leaf leaf) {
           overlappingLeaves.add(leaf);
         } else {
@@ -827,7 +907,9 @@ public class ShapeSearchTree extends MinAreaTree {
     }
     TileShape roomShape = incompleteRoom.getShape();
     if (shapeToBeContained == null || shapeToBeContained.isEmpty()) {
-      FRLogger.trace("ShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace("ShapeSearchTree.restrain_shape: shapeToBeContained is empty");
+      }
       return result;
     }
     int layer = incompleteRoom.getLayer();
@@ -975,6 +1057,7 @@ public class ShapeSearchTree extends MinAreaTree {
   }
 
   private void changeItemShapeUnlocked(Item item, int shapeIndex, TileShape newShape) {
+    markModified();
     Leaf[] oldEntries = item.getSearchTreeEntries(this);
     Leaf[] newLeafArr = new Leaf[oldEntries.length];
     TileShape[] newPrecalculatedTreeShapes = new TileShape[oldEntries.length];

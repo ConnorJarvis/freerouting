@@ -38,12 +38,35 @@ public class ExpansionDoor implements ExpandableObject {
     this.dimension = firstRoom.getShape().intersection(secondRoom.getShape()).dimension();
   }
 
-  /** Calculates the intersection of the shapes of the 2 rooms belonging to this door. */
+  /** The room shapes the cached door shape was computed from, compared by identity. */
+  private TileShape cachedFirstRoomShape;
+
+  private TileShape cachedSecondRoomShape;
+
+  /** The intersection of the two room shapes, valid while both room shapes are unchanged. */
+  private TileShape cachedShape;
+
+  /**
+   * Returns the intersection of the shapes of the 2 rooms belonging to this door.
+   *
+   * <p>The intersection is cached and reused while both rooms still return the same (immutable)
+   * shape instances. The maze search asks for a door's shape many times per expansion step, and
+   * recomputing the intersection each time was one of the larger geometry costs of the search.
+   */
   @Override
   public TileShape getShape() {
     TileShape firstShape = firstRoom.getShape();
     TileShape secondShape = secondRoom.getShape();
-    return firstShape.intersection(secondShape);
+    if (cachedShape != null
+        && firstShape == cachedFirstRoomShape
+        && secondShape == cachedSecondRoomShape) {
+      return cachedShape;
+    }
+    TileShape result = firstShape.intersection(secondShape);
+    cachedFirstRoomShape = firstShape;
+    cachedSecondRoomShape = secondShape;
+    cachedShape = result;
+    return result;
   }
 
   /**

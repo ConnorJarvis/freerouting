@@ -1,5 +1,7 @@
 package app.freerouting.datastructures;
 
+import app.freerouting.geometry.planar.IntBox;
+import app.freerouting.geometry.planar.IntOctagon;
 import app.freerouting.geometry.planar.RegularTileShape;
 import app.freerouting.geometry.planar.ShapeBoundingDirections;
 import app.freerouting.logger.FRLogger;
@@ -44,6 +46,8 @@ public class MinAreaTree extends ShapeTree {
     if (this.root == null) {
       return foundOverlaps;
     }
+    IntOctagon query = toOctagon(shape);
+    IntBox boxQuery = shape instanceof IntBox box ? box : null;
     ArrayStack<TreeNode> stack = nodeStack.get();
     stack.reset();
     stack.push(this.root);
@@ -54,7 +58,11 @@ public class MinAreaTree extends ShapeTree {
         break;
       }
       onNodeVisited();
-      if (currentNode.boundingShape.intersects(shape)) {
+      boolean intersects =
+          boxQuery != null
+              ? currentNode.boundsIntersect(boxQuery, query)
+              : currentNode.boundsIntersect(query);
+      if (intersects) {
         if (currentNode instanceof Leaf leaf) {
           foundOverlaps.add(leaf);
         } else {
@@ -83,6 +91,7 @@ public class MinAreaTree extends ShapeTree {
 
   /** Inserts a leaf while the write lock is already held. */
   private void insertUnlocked(Leaf leaf) {
+    markModified();
     ++this.leafCount;
 
     // Tree is empty - just insert the new leaf
@@ -125,8 +134,8 @@ public class MinAreaTree extends ShapeTree {
 
     while (!(node instanceof Leaf)) {
       InnerNode currentInnerNode = (InnerNode) node;
-      currentInnerNode.boundingShape =
-          leafToInsert.boundingShape.union(currentInnerNode.boundingShape);
+      currentInnerNode.setBoundingShape(
+          leafToInsert.boundingShape.union(currentInnerNode.boundingShape));
 
       // Choose the child, so that the area increase of that child after taking the union
       // with the shape of leafToInsert is minimal.
@@ -169,6 +178,7 @@ public class MinAreaTree extends ShapeTree {
     if (leaf.parent == null && root != leaf) {
       return;
     }
+    markModified();
     // remove the leaf node
     InnerNode parent = leaf.parent;
     // Keep payload fields valid for callers that retained this Leaf from an earlier query; only
@@ -208,7 +218,7 @@ public class MinAreaTree extends ShapeTree {
     parent.parent = null;
     parent.firstChild = null;
     parent.secondChild = null;
-    parent.boundingShape = null;
+    parent.setBoundingShape(null);
 
     // recalculate the bounding shapes of the ancestors
     // as long as it gets smaller after removing leaf
@@ -221,7 +231,7 @@ public class MinAreaTree extends ShapeTree {
         // the new bounds are not smaller, no further recalculate necessary
         break;
       }
-      nodeToRecalculate.boundingShape = newBounds;
+      nodeToRecalculate.setBoundingShape(newBounds);
       nodeToRecalculate = nodeToRecalculate.parent;
     }
   }

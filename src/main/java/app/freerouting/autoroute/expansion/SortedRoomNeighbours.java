@@ -123,9 +123,11 @@ public final class SortedRoomNeighbours {
     } else {
       roomNeighbours.calculateNewIncompleteRooms(autorouteEngine);
       if (result.getShape().dimension() < 2) {
-        FRLogger.trace(
-            "AutorouteEngine.calculate_new_incomplete_rooms_with_more_than_1_neighbour: "
-                + "unexpected dimension for smoothened_shape");
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "AutorouteEngine.calculate_new_incomplete_rooms_with_more_than_1_neighbour: "
+                  + "unexpected dimension for smoothened_shape");
+        }
       }
     }
 
@@ -239,9 +241,11 @@ public final class SortedRoomNeighbours {
             obstacleRoom.createOverlapDoor(currentOverlapRoom);
           }
         } else {
-          FRLogger.trace(
-              "SortedRoomNeighbours.calculate: "
-                  + "unexpected area overlap of free space expansion room");
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "SortedRoomNeighbours.calculate: "
+                    + "unexpected area overlap of free space expansion room");
+          }
         }
         continue;
       }
@@ -444,16 +448,18 @@ public final class SortedRoomNeighbours {
     if (removeEdgeNo >= 0) {
       // Touching neighbour missing at the edge side with index removeEdgeNo
       // Remove the edge line and restart the algorithm.
-      FRLogger.trace(
-          "ROOM_EDGE_REMOVE start"
-              + ", net="
-              + netNumber
-              + ", layer="
-              + currentIncompleteRoom.getLayer()
-              + ", removeEdge="
-              + removeEdgeNo
-              + ", room_bounds="
-              + currentIncompleteRoom.getShape().boundingBox());
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "ROOM_EDGE_REMOVE start"
+                + ", net="
+                + netNumber
+                + ", layer="
+                + currentIncompleteRoom.getLayer()
+                + ", removeEdge="
+                + removeEdgeNo
+                + ", room_bounds="
+                + currentIncompleteRoom.getShape().boundingBox());
+      }
       Simplex enlargedShape = roomSimplex.removeBorderLine(removeEdgeNo);
       IncompleteFreeSpaceExpansionRoom enlargedRoom =
           new IncompleteFreeSpaceExpansionRoom(
@@ -462,18 +468,22 @@ public final class SortedRoomNeighbours {
               currentIncompleteRoom.getContainedShape());
       Collection<IncompleteFreeSpaceExpansionRoom> newRooms =
           autorouteSearchTree.completeShape(enlargedRoom, netNumber, null, null);
-      FRLogger.trace(
-          "ROOM_EDGE_REMOVE complete_shape"
-              + ", net="
-              + netNumber
-              + ", layer="
-              + currentIncompleteRoom.getLayer()
-              + ", removeEdge="
-              + removeEdgeNo
-              + ", candidate_count="
-              + newRooms.size());
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "ROOM_EDGE_REMOVE complete_shape"
+                + ", net="
+                + netNumber
+                + ", layer="
+                + currentIncompleteRoom.getLayer()
+                + ", removeEdge="
+                + removeEdgeNo
+                + ", candidate_count="
+                + newRooms.size());
+      }
       if (newRooms.size() != 1) {
-        FRLogger.trace("AutorouteEngine.calculate_doors: 1 completed shape expected");
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace("AutorouteEngine.calculate_doors: 1 completed shape expected");
+        }
         return false;
       }
       boolean removeEdge = false;
@@ -485,18 +495,20 @@ public final class SortedRoomNeighbours {
       if (removeEdge) {
         Iterator<IncompleteFreeSpaceExpansionRoom> it2 = newRooms.iterator();
         IncompleteFreeSpaceExpansionRoom newRoom = it2.next();
-        FRLogger.trace(
-            "ROOM_EDGE_REMOVE applied"
-                + ", net="
-                + netNumber
-                + ", layer="
-                + currentIncompleteRoom.getLayer()
-                + ", removeEdge="
-                + removeEdgeNo
-                + ", old_bounds="
-                + currentIncompleteRoom.getShape().boundingBox()
-                + ", newBounds="
-                + newRoom.getShape().boundingBox());
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "ROOM_EDGE_REMOVE applied"
+                  + ", net="
+                  + netNumber
+                  + ", layer="
+                  + currentIncompleteRoom.getLayer()
+                  + ", removeEdge="
+                  + removeEdgeNo
+                  + ", old_bounds="
+                  + currentIncompleteRoom.getShape().boundingBox()
+                  + ", newBounds="
+                  + newRoom.getShape().boundingBox());
+        }
         currentIncompleteRoom.setShape(newRoom.getShape());
         currentIncompleteRoom.setContainedShape(newRoom.getContainedShape());
         return true;

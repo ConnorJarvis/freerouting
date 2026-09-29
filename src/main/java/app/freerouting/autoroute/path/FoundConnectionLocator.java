@@ -76,26 +76,30 @@ public abstract class FoundConnectionLocator {
       this.backtrackArray[i] = it.next();
     }
     if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-      FRLogger.trace(
-          "compare_trace_backtrack_raw net="
-              + this.ctrl.netNumber
-              + ", size="
-              + this.backtrackArray.length);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_backtrack_raw net="
+                + this.ctrl.netNumber
+                + ", size="
+                + this.backtrackArray.length);
+      }
       for (int i = 0; i < this.backtrackArray.length; i++) {
         BacktrackElement element = this.backtrackArray[i];
         String nextRoomType =
             element.nextRoom != null ? element.nextRoom.getClass().getSimpleName() : "null";
-        FRLogger.trace(
-            "compare_trace_backtrack_raw net="
-                + this.ctrl.netNumber
-                + ", idx="
-                + i
-                + ", door_type="
-                + element.door.getClass().getSimpleName()
-                + ", section="
-                + element.sectionNoOfDoor
-                + ", next_room_type="
-                + nextRoomType);
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "compare_trace_backtrack_raw net="
+                  + this.ctrl.netNumber
+                  + ", idx="
+                  + i
+                  + ", door_type="
+                  + element.door.getClass().getSimpleName()
+                  + ", section="
+                  + element.sectionNoOfDoor
+                  + ", next_room_type="
+                  + nextRoomType);
+        }
       }
     }
     this.connectionItems = new LinkedList<>();
@@ -238,15 +242,17 @@ public abstract class FoundConnectionLocator {
     boolean debugBacktrack = netNumber == 98;
     if (debugBacktrack) {
       String destType = currentBacktrackDoor.getClass().getSimpleName();
-      FRLogger.trace(
-          "BACKTRACK_START net="
-              + netNumber
-              + ", dest_type="
-              + destType
-              + ", dest_section="
-              + mazeSearchResult.sectionNoOfDoor
-              + ", dest_room_ripped="
-              + currentMazeSearchElement.roomRipped);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "BACKTRACK_START net="
+                + netNumber
+                + ", dest_type="
+                + destType
+                + ", dest_section="
+                + mazeSearchResult.sectionNoOfDoor
+                + ", dest_room_ripped="
+                + currentMazeSearchElement.roomRipped);
+      }
     }
     if (currentBacktrackDoor instanceof TargetItemExpansionDoor door) {
       currentNextRoom = door.room;
@@ -295,23 +301,25 @@ public abstract class FoundConnectionLocator {
         if (currentNextRoom instanceof ObstacleExpansionRoom obst) {
           obstacleId = obst.getItem().getId();
         }
-        FRLogger.trace(
-            "BACKTRACK_STEP net="
-                + netNumber
-                + ", step="
-                + step
-                + ", door_type="
-                + doorType
-                + ", section="
-                + currentSectionNo
-                + ", roomRipped="
-                + currentMazeSearchElement.roomRipped
-                + ", ripupCost="
-                + currentMazeSearchElement.ripupCost
-                + ", next_room_type="
-                + nextRoomType
-                + ", obstacle_id="
-                + obstacleId);
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "BACKTRACK_STEP net="
+                  + netNumber
+                  + ", step="
+                  + step
+                  + ", door_type="
+                  + doorType
+                  + ", section="
+                  + currentSectionNo
+                  + ", roomRipped="
+                  + currentMazeSearchElement.roomRipped
+                  + ", ripupCost="
+                  + currentMazeSearchElement.ripupCost
+                  + ", next_room_type="
+                  + nextRoomType
+                  + ", obstacle_id="
+                  + obstacleId);
+        }
       }
       if (currentMazeSearchElement.roomRipped) {
         if (currentNextRoom instanceof ObstacleExpansionRoom room) {
@@ -468,25 +476,27 @@ public abstract class FoundConnectionLocator {
     if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
       IntPoint first = corners.length > 0 ? corners[0] : null;
       IntPoint last = corners.length > 0 ? corners[corners.length - 1] : null;
-      FRLogger.trace(
-          "compare_trace_next_trace_raw net="
-              + this.ctrl.netNumber
-              + ", traceLayer="
-              + this.currentTraceLayer
-              + ", nextLayer="
-              + nextLayer
-              + ", cornerCount="
-              + corners.length
-              + ", first="
-              + first
-              + ", last="
-              + last
-              + ", from_door="
-              + this.currentFromDoorIndex
-              + ", to_door="
-              + this.currentToDoorIndex
-              + ", target_door="
-              + this.currentTargetDoorIndex);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_next_trace_raw net="
+                + this.ctrl.netNumber
+                + ", traceLayer="
+                + this.currentTraceLayer
+                + ", nextLayer="
+                + nextLayer
+                + ", cornerCount="
+                + corners.length
+                + ", first="
+                + first
+                + ", last="
+                + last
+                + ", from_door="
+                + this.currentFromDoorIndex
+                + ", to_door="
+                + this.currentToDoorIndex
+                + ", target_door="
+                + this.currentTargetDoorIndex);
+      }
     }
     this.currentTraceLayer = nextLayer;
     return result;

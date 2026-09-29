@@ -61,17 +61,19 @@ public class NetIncompletes {
 
     String netLabel = "Net #" + netNumber + (net != null ? " (" + net.name + ")" : "");
 
-    FRLogger.trace(
-        "NetIncompletes.<init>",
-        "start_calculation",
-        "Starting incomplete calculation: net="
-            + netNumber
-            + ", name="
-            + (net != null ? net.name : "null")
-            + ", total_items_in_collection="
-            + netItems.size(),
-        netLabel,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "NetIncompletes.<init>",
+          "start_calculation",
+          "Starting incomplete calculation: net="
+              + netNumber
+              + ", name="
+              + (net != null ? net.name : "null")
+              + ", total_items_in_collection="
+              + netItems.size(),
+          netLabel,
+          new Point[0]);
+    }
 
     // Filter out dangling items (vias and tracks with isTail() == true)
     // AND items with zero contacts (unconnected pins/pads)
@@ -115,21 +117,23 @@ public class NetIncompletes {
       filteredItems.add(item);
     }
 
-    FRLogger.trace(
-        "NetIncompletes.<init>",
-        "filtering_complete",
-        "Filtering complete: filteredItems="
-            + filteredItems.size()
-            + ", dangling="
-            + danglingCount
-            + ", unconnected="
-            + unconnectedCount
-            + ", conduction_areas_total="
-            + conductionAreaCount
-            + ", conduction_areas_kept="
-            + conductionAreaFilteredCount,
-        netLabel,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "NetIncompletes.<init>",
+          "filtering_complete",
+          "Filtering complete: filteredItems="
+              + filteredItems.size()
+              + ", dangling="
+              + danglingCount
+              + ", unconnected="
+              + unconnectedCount
+              + ", conduction_areas_total="
+              + conductionAreaCount
+              + ", conduction_areas_kept="
+              + conductionAreaFilteredCount,
+          netLabel,
+          new Point[0]);
+    }
 
     // Create an array of Item-connectedSet pairs.
     NetItem[] groupedNetItems = calculateNetItems(filteredItems);
@@ -140,25 +144,29 @@ public class NetIncompletes {
     }
     this.connectedGroupCount = uniqueConnectedSets.size();
 
-    FRLogger.trace(
-        "NetIncompletes.<init>",
-        "connected_sets_calculated",
-        "Connected sets calculated: net_items_count="
-            + groupedNetItems.length
-            + ", uniqueConnectedSets="
-            + uniqueConnectedSets.size()
-            + " (for N groups, expect N-1 airlines)",
-        netLabel,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "NetIncompletes.<init>",
+          "connected_sets_calculated",
+          "Connected sets calculated: net_items_count="
+              + groupedNetItems.length
+              + ", uniqueConnectedSets="
+              + uniqueConnectedSets.size()
+              + " (for N groups, expect N-1 airlines)",
+          netLabel,
+          new Point[0]);
+    }
 
     if (groupedNetItems.length <= 1) {
       this.connectedGroupCount = groupedNetItems.length;
-      FRLogger.trace(
-          "NetIncompletes.<init>",
-          "fully_connected",
-          "Net is fully connected or has no routable items: netItems=" + groupedNetItems.length,
-          netLabel,
-          new Point[0]);
+      if (FRLogger.isGranularTraceEnabled()) {
+        FRLogger.trace(
+            "NetIncompletes.<init>",
+            "fully_connected",
+            "Net is fully connected or has no routable items: netItems=" + groupedNetItems.length,
+            netLabel,
+            new Point[0]);
+      }
       return;
     }
 
@@ -204,23 +212,25 @@ public class NetIncompletes {
           groupedNetItems, currentEdge.fromItem.connectedSet, currentEdge.toItem.connectedSet);
     }
 
-    FRLogger.trace(
-        "NetIncompletes.<init>",
-        "airlines_created",
-        "Airlines created: incompleteCount="
-            + this.incompletes.size()
-            + ", total_items="
-            + netItems.size()
-            + ", filteredItems="
-            + filteredItems.size()
-            + ", netItems="
-            + groupedNetItems.length
-            + ", connected_groups="
-            + uniqueConnectedSets.size()
-            + " => Formula: total_items - incompleteCount = "
-            + (netItems.size() - this.incompletes.size()),
-        netLabel,
-        new Point[0]);
+    if (FRLogger.isGranularTraceEnabled()) {
+      FRLogger.trace(
+          "NetIncompletes.<init>",
+          "airlines_created",
+          "Airlines created: incompleteCount="
+              + this.incompletes.size()
+              + ", total_items="
+              + netItems.size()
+              + ", filteredItems="
+              + filteredItems.size()
+              + ", netItems="
+              + groupedNetItems.length
+              + ", connected_groups="
+              + uniqueConnectedSets.size()
+              + " => Formula: total_items - incompleteCount = "
+              + (netItems.size() - this.incompletes.size()),
+          netLabel,
+          new Point[0]);
+    }
 
     calcLengthViolation();
   }

@@ -50,6 +50,9 @@ public class MazeListElement implements Comparable<MazeListElement> {
    */
   int ripupCost;
 
+  /** Insertion order in the {@link MazeExpansionQueue}; breaks ties between equal elements. */
+  long queueSequence;
+
   /** Creates a new instance of ExpansionInfo. */
   public MazeListElement(
       ExpandableObject door,

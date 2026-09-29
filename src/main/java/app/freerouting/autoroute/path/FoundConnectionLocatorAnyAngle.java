@@ -122,15 +122,19 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       leftTangentPoint =
           this.currentFromPoint.rightTangentialPoint(doorLeftCorner, traceHalfwidthMax);
       if (doorLeftCorner != null && leftTangentPoint == null) {
-        FRLogger.trace(
-            "FoundConnectionLocator.calculate_next_trace_corner: left tangent point is null");
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "FoundConnectionLocator.calculate_next_trace_corner: left tangent point is null");
+        }
         leftTangentPoint = doorLeftCorner;
       }
       rightTangentPoint =
           this.currentFromPoint.leftTangentialPoint(doorRightCorner, traceHalfwidthMax);
       if (doorRightCorner != null && rightTangentPoint == null) {
-        FRLogger.trace(
-            "FoundConnectionLocator.calculate_next_trace_corner: right tangent point is null");
+        if (FRLogger.isTraceEnabled()) {
+          FRLogger.trace(
+              "FoundConnectionLocator.calculate_next_trace_corner: right tangent point is null");
+        }
         rightTangentPoint = doorRightCorner;
       }
       if (leftTangentPoint != null
@@ -178,8 +182,10 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
         if (nextLeftCorner == null && nextRightCorner == null) {
           // The door is completely passed.
           // Should not happen because the previous door was not passed completely.
-          FRLogger.trace(
-              "FoundConnectionLocator.calculate_next_trace_corner: next door passed unexpected");
+          if (FRLogger.isTraceEnabled()) {
+            FRLogger.trace(
+                "FoundConnectionLocator.calculate_next_trace_corner: next door passed unexpected");
+          }
           ++this.currentToDoorIndex;
           result.add(this.currentFromPoint);
           return result;
@@ -330,27 +336,29 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       result.add(resultCorner);
     }
     if (this.ctrl.netNumber == 33 || this.ctrl.netNumber == 66 || this.ctrl.netNumber == 67) {
-      FRLogger.trace(
-          "compare_trace_next_corners_raw net="
-              + this.ctrl.netNumber
-              + ", layer="
-              + this.currentTraceLayer
-              + ", from_door="
-              + this.currentFromDoorIndex
-              + ", to_door="
-              + this.currentToDoorIndex
-              + ", target_door="
-              + this.currentTargetDoorIndex
-              + ", endOfTrace="
-              + endOfTrace
-              + ", corrected="
-              + (correctedResult != null)
-              + ", result_size="
-              + result.size()
-              + ", resultCorner="
-              + resultCorner
-              + ", current_from="
-              + this.currentFromPoint);
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "compare_trace_next_corners_raw net="
+                + this.ctrl.netNumber
+                + ", layer="
+                + this.currentTraceLayer
+                + ", from_door="
+                + this.currentFromDoorIndex
+                + ", to_door="
+                + this.currentToDoorIndex
+                + ", target_door="
+                + this.currentTargetDoorIndex
+                + ", endOfTrace="
+                + endOfTrace
+                + ", corrected="
+                + (correctedResult != null)
+                + ", result_size="
+                + result.size()
+                + ", resultCorner="
+                + resultCorner
+                + ", current_from="
+                + this.currentFromPoint);
+      }
     }
     return result;
   }
@@ -366,15 +374,19 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       FloatPoint fromCorner, double dist, FloatPoint toCorner, FloatPoint nextCorner) {
     FloatPoint currentTangentialPoint = fromCorner.leftTangentialPoint(toCorner, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator.right_turn_next_corner: left tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator.right_turn_next_corner: left tangential point is null");
+      }
       return fromCorner;
     }
     final FloatLine firstLine = new FloatLine(fromCorner, currentTangentialPoint);
     currentTangentialPoint = toCorner.rightTangentialPoint(nextCorner, 2 * dist + cTolerance);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator.right_turn_next_corner: right tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator.right_turn_next_corner: right tangential point is null");
+      }
       return fromCorner;
     }
     FloatLine secondLine = new FloatLine(toCorner, currentTangentialPoint);
@@ -392,14 +404,19 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       FloatPoint fromCorner, double dist, FloatPoint toCorner, FloatPoint nextCorner) {
     FloatPoint currentTangentialPoint = fromCorner.rightTangentialPoint(toCorner, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator.left_turn_next_corner: right tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator.left_turn_next_corner: right tangential point is null");
+      }
       return fromCorner;
     }
     final FloatLine firstLine = new FloatLine(fromCorner, currentTangentialPoint);
     currentTangentialPoint = toCorner.leftTangentialPoint(nextCorner, 2 * dist + cTolerance);
     if (currentTangentialPoint == null) {
-      FRLogger.trace("FoundConnectionLocator.left_turn_next_corner: left tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator.left_turn_next_corner: left tangential point is null");
+      }
       return fromCorner;
     }
     FloatLine secondLine = new FloatLine(toCorner, currentTangentialPoint);
@@ -415,15 +432,19 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       FloatPoint fromPoint, FloatPoint toPoint, FloatPoint center, double dist) {
     FloatPoint currentTangentialPoint = fromPoint.rightTangentialPoint(center, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator. right_left_tangential_point: right tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator. right_left_tangential_point: right tangential point is null");
+      }
       return null;
     }
     FloatLine firstLine = new FloatLine(fromPoint, currentTangentialPoint);
     currentTangentialPoint = toPoint.leftTangentialPoint(center, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator. right_left_tangential_point: left tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator. right_left_tangential_point: left tangential point is null");
+      }
       return null;
     }
     FloatLine secondLine = new FloatLine(toPoint, currentTangentialPoint);
@@ -438,15 +459,19 @@ class FoundConnectionLocatorAnyAngle extends FoundConnectionLocator {
       FloatPoint fromPoint, FloatPoint toPoint, FloatPoint center, double dist) {
     FloatPoint currentTangentialPoint = fromPoint.leftTangentialPoint(center, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator. left_right_tangential_point: left tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator. left_right_tangential_point: left tangential point is null");
+      }
       return null;
     }
     FloatLine firstLine = new FloatLine(fromPoint, currentTangentialPoint);
     currentTangentialPoint = toPoint.rightTangentialPoint(center, dist);
     if (currentTangentialPoint == null) {
-      FRLogger.trace(
-          "FoundConnectionLocator. left_right_tangential_point: right tangential point is null");
+      if (FRLogger.isTraceEnabled()) {
+        FRLogger.trace(
+            "FoundConnectionLocator. left_right_tangential_point: right tangential point is null");
+      }
       return null;
     }
     FloatLine secondLine = new FloatLine(toPoint, currentTangentialPoint);
